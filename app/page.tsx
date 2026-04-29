@@ -3,196 +3,276 @@
 import { ConnectWallet } from "@coinbase/onchainkit/wallet";
 import { useAccount } from "wagmi";
 import { motion } from "framer-motion";
-import { Play, Users, Zap, Sword } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Play, Users, Zap, Sword, Trophy } from "lucide-react";
+import RiftGame from "@/components/RiftGame";
+import { useState } from "react";
 
-export default function RiftTearLanding() {
+export default function RiftTear() {
   const { isConnected } = useAccount();
-  const [riftActive, setRiftActive] = useState(false);
-  const [tearCount, setTearCount] = useState(0);
+  const [showGame, setShowGame] = useState(false);
+  const [activeMatch, setActiveMatch] = useState<any>(null);
 
-  // Reality-tearing glitch system
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setRiftActive(true);
-      setTearCount((prev) => prev + 1);
-      setTimeout(() => setRiftActive(false), 140);
-    }, 1850);
-    return () => clearInterval(interval);
-  }, []);
+  const createMatch = () => {
+    // TODO: OnchainKit Transaction for creating match + escrow
+    const newMatch = {
+      id: Date.now(),
+      bet: "0.05",
+      opponent: "0x71C...4a2F",
+      status: "waiting",
+    };
+    setActiveMatch(newMatch);
+    setShowGame(true);
+  };
 
-  const triggerRift = () => {
-    setRiftActive(true);
-    setTearCount((prev) => prev + 1);
-    setTimeout(() => setRiftActive(false), 220);
+  const joinMatch = () => {
+    setActiveMatch({
+      id: Date.now(),
+      bet: "0.08",
+      opponent: "0x3f2...9b1C",
+      status: "live",
+    });
+    setShowGame(true);
   };
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden relative">
-      {/* Background Rift Layers */}
-      <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,#0000FF_0px,#0000FF_1px,transparent_1px,transparent_4px)] opacity-[0.035]" />
-      
-      {/* Dynamic Screen Tears */}
-      <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div
-            key={i}
-            className="absolute h-[1px] w-full bg-gradient-to-r from-transparent via-[#0052FF] to-transparent"
-            style={{
-              top: `${15 + i * 14}%`,
-              animation: `rift-tear ${1.6 + i * 0.2}s linear infinite`,
-              animationDelay: `-${i * 0.3}s`,
-              opacity: 0.6 + (i % 3) * 0.15,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Top Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-5 border-b border-white/10 bg-black/90 backdrop-blur-xl">
+    <div className="min-h-screen bg-black text-white overflow-hidden">
+      {/* NAV */}
+      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-5 border-b border-white/10 bg-black/95 backdrop-blur-xl">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-[#0052FF] flex items-center justify-center">
-            <span className="text-black text-xl font-black tracking-[-2px]">R</span>
+          <div className="w-9 h-9 rounded-full bg-[#0052FF] flex items-center justify-center">
+            <span className="text-black text-2xl font-black tracking-[-3px]">R</span>
           </div>
           <div>
-            <div className="font-black text-2xl tracking-[-1.5px]">RIFTTEAR</div>
-            <div className="text-[9px] text-[#0052FF] -mt-1 tracking-[3px]">BASE • ONCHAIN</div>
+            <div className="font-black text-3xl tracking-[-1.5px]">RIFTTEAR</div>
+            <div className="text-[9px] text-[#0052FF] -mt-1.5 tracking-[4px]">BASE PROTOCOL</div>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <a href="#matches" className="text-sm tracking-[1px] hover:text-[#0052FF] transition-colors px-5 py-2">MATCHES</a>
-          <a href="#skins" className="text-sm tracking-[1px] hover:text-[#0052FF] transition-colors px-5 py-2">SKINS</a>
-          <ConnectWallet className="neon-connect px-6 py-2.5 text-sm font-semibold border border-[#0052FF] hover:bg-[#0052FF] hover:text-black transition-all" />
+        <div className="flex items-center gap-4 text-sm">
+          <a href="#game" className="hover:text-[#0052FF] transition-colors px-4 py-2 tracking-[1px]">PLAY</a>
+          <a href="#matches" className="hover:text-[#0052FF] transition-colors px-4 py-2 tracking-[1px]">MATCHES</a>
+          <a href="#skins" className="hover:text-[#0052FF] transition-colors px-4 py-2 tracking-[1px]">SKINS</a>
+          <ConnectWallet className="neon-connect px-7 py-2.5 text-sm font-semibold border border-[#0052FF] hover:bg-[#0052FF] hover:text-black transition-all" />
         </div>
       </nav>
 
-      {/* HERO — REALITY TEARING */}
+      {/* HERO */}
       <div className="relative min-h-[100dvh] flex flex-col items-center justify-center pt-16 px-6 z-20">
-        <div className="absolute inset-0 bg-[radial-gradient(#0052FF_0.6px,transparent_1.2px)] bg-[length:5px_5px] opacity-30" />
-
-        <div className="relative text-center mb-8" onClick={triggerRift}>
+        <div className="absolute inset-0 bg-[radial-gradient(#0052FF_0.5px,transparent_1.5px)] bg-[length:4px_4px] opacity-20" />
+        
+        <div className="relative text-center mb-8">
           <div className="inline-flex items-center gap-2 px-5 py-1 rounded-full border border-[#0052FF]/60 text-xs tracking-[4px] text-[#0052FF] mb-6">
-            REALITY IS FRACTURING
+            REALITY PROTOCOL v0.4 • BASE MAINNET
           </div>
 
-          <h1 
-            className={`text-[92px] md:text-[140px] font-black tracking-[-7px] leading-[0.88] text-[#0052FF] relative select-none ${riftActive ? 'rift-glitch' : ''}`}
-          >
+          <h1 className="text-[110px] md:text-[148px] font-black tracking-[-8px] leading-[0.86] text-[#0052FF]">
             RIFT<br />TEAR
           </h1>
-
-          {/* Tear Duplicates */}
-          <div className="absolute top-0 left-0 text-[92px] md:text-[140px] font-black tracking-[-7px] text-white/30 -translate-x-1 translate-y-1 pointer-events-none">RIFT<br />TEAR</div>
-          <div className="absolute top-0 left-0 text-[92px] md:text-[140px] font-black tracking-[-7px] text-[#3c8aff]/40 translate-x-1 -translate-y-1 pointer-events-none">RIFT<br />TEAR</div>
+          <div className="text-[21px] text-white/90 tracking-tight -mt-4">1v1 ENDLESS RUNNER • BET • WIN • TEAR</div>
         </div>
 
-        <p className="max-w-2xl text-center text-2xl md:text-4xl tracking-tight text-white/90 mb-4 font-medium">
-          1v1 ENDLESS RUNNER.<br />BET CRYPTO. <span className="text-[#0052FF]">TEAR REALITY.</span>
-        </p>
-        <p className="text-[#3c8aff] text-lg tracking-[3px] mb-12 font-mono">WINNER TAKES THE ENTIRE POT • ON BASE</p>
-
-        {/* Primary CTAs */}
-        <div className="flex flex-col sm:flex-row gap-4 z-30">
-          <motion.a
-            href="#create-match"
-            onClick={triggerRift}
-            className="rift-btn group flex items-center justify-center gap-3 px-16 py-6 text-xl font-semibold border-2 border-[#0052FF] hover:bg-[#0052FF] hover:text-black active:scale-[0.985] transition-all"
+        <div className="flex flex-col sm:flex-row gap-4 z-30 mt-4">
+          <motion.button 
+            onClick={() => setShowGame(true)}
+            className="rift-btn flex items-center justify-center gap-3 px-16 py-6 text-xl font-semibold border-2 border-[#0052FF] hover:bg-[#0052FF] hover:text-black active:scale-[0.985] transition-all"
             whileHover={{ scale: 1.015 }}
-            whileTap={{ scale: 0.985 }}
           >
-            <Play className="w-6 h-6" /> CREATE MATCH
-          </motion.a>
+            <Play className="w-6 h-6" /> ENTER THE RIFT
+          </motion.button>
 
-          <motion.a
-            href="#join-match"
-            onClick={triggerRift}
-            className="rift-btn group flex items-center justify-center gap-3 px-16 py-6 text-xl font-semibold border-2 border-white/70 hover:border-white hover:bg-white hover:text-black active:scale-[0.985] transition-all"
+          <motion.a 
+            href="#matches"
+            className="rift-btn flex items-center justify-center gap-3 px-14 py-6 text-xl font-semibold border-2 border-white/60 hover:border-white hover:bg-white hover:text-black active:scale-[0.985] transition-all"
             whileHover={{ scale: 1.015 }}
-            whileTap={{ scale: 0.985 }}
           >
-            <Users className="w-6 h-6" /> JOIN MATCH
+            <Users className="w-6 h-6" /> CREATE MATCH
           </motion.a>
         </div>
 
-        <div className="mt-16 flex flex-col items-center gap-3 text-xs tracking-[2px] text-white/50 font-mono">
-          POWERED BY BASE • ONCHAINKIT • WAGMI
-          <div className="flex items-center gap-1.5 text-[10px]">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="w-px h-3 bg-white/30" />
-            ))}
-            TEARING REALITY SINCE COMMIT 2
+        <div className="mt-16 text-xs tracking-[2.5px] text-white/40 font-mono">SCROLL TO BEGIN THE FRACTURE ↓</div>
+      </div>
+
+      {/* GAME SECTION */}
+      <div id="game" className="relative z-20 py-20 border-t border-white/10 bg-zinc-950">
+        <div className="max-w-[980px] mx-auto px-6">
+          <div className="text-center mb-12">
+            <div className="text-[#0052FF] text-sm tracking-[3px] mb-3">LIVE ON BASE</div>
+            <h2 className="text-6xl font-black tracking-[-1px]">THE RIFT IS OPEN</h2>
+            <p className="text-xl text-white/60 mt-3 max-w-md mx-auto">Jump. Dodge. Tear. The most intense endless runner ever built onchain.</p>
+          </div>
+
+          <div className="flex justify-center">
+            <RiftGame />
+          </div>
+
+          <div className="text-center mt-8 text-xs tracking-[1px] text-white/50 font-mono">
+            SPACE = JUMP &nbsp;•&nbsp; G = MASSIVE GLITCH &nbsp;•&nbsp; TAP SCREEN ON MOBILE
           </div>
         </div>
       </div>
 
-      {/* REALITY FRACTURE FEATURES */}
-      <div id="features" className="relative z-20 py-24 border-t border-white/10 bg-zinc-950">
-        <div className="max-w-6xl mx-auto px-6">
+      {/* ONCHAIN MATCHES */}
+      <div id="matches" className="relative z-20 py-24 border-t border-white/10">
+        <div className="max-w-5xl mx-auto px-6">
           <div className="text-center mb-16">
-            <div className="text-[#0052FF] text-sm tracking-[4px] mb-3">DIMENSIONAL COLLAPSE ENABLED</div>
-            <h2 className="text-7xl font-black tracking-[-2px]">THE RIFT IS OPEN</h2>
+            <div className="text-[#0052FF] text-xs tracking-[3px]">FULLY ONCHAIN • ESCROWED POTS</div>
+            <h2 className="text-6xl font-black tracking-tight mt-2">CREATE OR JOIN A MATCH</h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              {
-                icon: Zap,
-                title: "REALITY-TEARING ENGINE",
-                desc: "Chromatic aberration, screen folds, digital static, particle rifts & live dimensional distortion that feels illegal in a browser.",
-              },
-              {
-                icon: Sword,
-                title: "FULLY ONCHAIN MATCHES",
-                desc: "Create or join 1v1 bets in ETH or USDC. Smart contract escrow. Winner auto-claims the entire pot. No middleman. Pure onchain.",
-              },
-              {
-                icon: Users,
-                title: "RIFT PFP SKINS",
-                desc: "Mint exclusive glitch-torn Pepe PFPs. Equip them in-game. Every skin has unique tearing animations and visual corruption effects.",
-              },
-            ].map((f, index) => (
-              <motion.div
-                key={index}
-                onMouseEnter={triggerRift}
-                className="glass group p-10 border border-white/10 hover:border-[#0052FF] transition-all duration-500"
-                whileHover={{ y: -6 }}
-              >
-                <div className="mb-9 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0052FF]/10 group-hover:bg-[#0052FF]/20 transition-colors">
-                  <f.icon className="h-8 w-8 text-[#0052FF]" />
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Create Match */}
+            <div className="glass p-10 border border-[#0052FF]/30 hover:border-[#0052FF] transition-all group">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="p-4 rounded-2xl bg-[#0052FF]/10">
+                  <Sword className="w-8 h-8 text-[#0052FF]" />
                 </div>
-                <h3 className="text-4xl font-semibold tracking-tight mb-5">{f.title}</h3>
-                <p className="text-lg text-white/70 leading-snug">{f.desc}</p>
-              </motion.div>
+                <div>
+                  <div className="text-3xl font-semibold tracking-tight">CREATE MATCH</div>
+                  <div className="text-sm text-white/50">Set your bet • Wait for challenger</div>
+                </div>
+              </div>
+
+              <div className="space-y-4 mb-10">
+                <div className="flex justify-between text-sm border-b border-white/10 pb-3">
+                  <span className="text-white/60">Bet Amount</span>
+                  <span className="font-mono text-[#0052FF]">0.05 ETH</span>
+                </div>
+                <div className="flex justify-between text-sm border-b border-white/10 pb-3">
+                  <span className="text-white/60">Pot</span>
+                  <span className="font-mono">0.10 ETH</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-white/60">Network</span>
+                  <span className="text-[#0052FF]">BASE MAINNET</span>
+                </div>
+              </div>
+
+              <button 
+                onClick={createMatch}
+                className="w-full py-4 bg-[#0052FF] text-black font-semibold tracking-[1px] hover:bg-white transition-all active:scale-[0.985]"
+              >
+                CREATE &amp; ESCROW ONCHAIN
+              </button>
+              <div className="text-[10px] text-center text-white/40 mt-3 tracking-widest">GASLESS • POWERED BY PAYMASTER</div>
+            </div>
+
+            {/* Join Match */}
+            <div className="glass p-10 border border-white/20 hover:border-white transition-all group">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="p-4 rounded-2xl bg-white/10">
+                  <Trophy className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <div className="text-3xl font-semibold tracking-tight">JOIN MATCH</div>
+                  <div className="text-sm text-white/50">3 active matches • 0.05–0.12 ETH</div>
+                </div>
+              </div>
+
+              <div className="space-y-3 mb-8">
+                {[0.05, 0.08, 0.12].map((amt, i) => (
+                  <div 
+                    key={i}
+                    onClick={joinMatch}
+                    className="flex items-center justify-between px-5 py-4 border border-white/10 hover:border-[#0052FF] cursor-pointer transition-all group-hover:border-white/30"
+                  >
+                    <div>
+                      <div className="font-mono text-lg text-[#0052FF]">{amt} ETH</div>
+                      <div className="text-xs text-white/50">vs 0x71C...4a2F • 2m ago</div>
+                    </div>
+                    <div className="text-xs px-3 py-1 border border-white/30 rounded">JOIN</div>
+                  </div>
+                ))}
+              </div>
+
+              <button 
+                onClick={joinMatch}
+                className="w-full py-4 border border-white/70 hover:bg-white hover:text-black font-semibold tracking-[1px] transition-all active:scale-[0.985]"
+              >
+                BROWSE ALL OPEN MATCHES
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* SKINS TEASER */}
+      <div id="skins" className="relative z-20 py-24 border-t border-white/10 bg-zinc-950">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <div className="text-[#0052FF] text-sm tracking-[3px] mb-4">EXCLUSIVE ONCHAIN PFPS</div>
+          <h2 className="text-6xl font-black tracking-tight mb-6">RIFT PFP SKINS</h2>
+          <p className="text-2xl text-white/70 max-w-lg mx-auto">Mint. Equip. Tear harder.<br />Every skin has unique glitch animations visible in-game.</p>
+
+          <div className="mt-12 flex justify-center gap-6">
+            {[1,2,3].map((i) => (
+              <div key={i} className="w-36 h-36 rounded-3xl border border-[#0052FF]/40 bg-zinc-950 flex items-center justify-center text-6xl opacity-60 hover:opacity-100 hover:border-[#0052FF] transition-all cursor-pointer">
+                👾
+              </div>
             ))}
           </div>
+
+          <button className="mt-12 px-14 py-4 border border-[#0052FF] text-sm tracking-[2px] hover:bg-[#0052FF] hover:text-black transition-all">
+            MINT RIFT SKIN — COMING COMMIT 12
+          </button>
         </div>
       </div>
 
       <footer className="border-t border-white/10 py-16 text-center text-xs tracking-[2px] text-white/40 font-mono">
-        RIFTTEAR • BUILT ON BASE • NOT SAFE FOR REALITY<br />
-        <span className="text-[#0052FF]">COMMIT 2/100 • v0.1</span>
+        RIFTTEAR PROTOCOL • BUILT ON BASE • COMMIT 4/100<br />
+        NOT SAFE FOR REALITY • PLAY AT YOUR OWN RISK
       </footer>
+
+      {/* Fullscreen Game Modal */}
+      {showGame && (
+        <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4">
+          <div className="relative w-full max-w-[980px]">
+            <button 
+              onClick={() => setShowGame(false)}
+              className="absolute -top-14 right-0 text-white/60 hover:text-white text-sm tracking-[2px] flex items-center gap-2"
+            >
+              CLOSE RIFT <span className="text-xl">×</span>
+            </button>
+            
+            <RiftGame />
+            
+            {activeMatch && (
+              <div className="mt-4 text-center text-xs text-[#0052FF] font-mono tracking-widest">
+                MATCH #{activeMatch.id} • POT {parseFloat(activeMatch.bet) * 2} ETH • {activeMatch.status.toUpperCase()}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <style jsx global>{`
         .rift-btn {
           position: relative;
           overflow: hidden;
+          transition: all 0.2s cubic-bezier(0.23, 1, 0.32, 1);
         }
         .rift-btn::after {
           content: '';
           position: absolute;
-          top: -100%;
-          left: -50%;
-          width: 30%;
-          height: 300%;
-          background: linear-gradient(120deg, transparent, rgba(255,255,255,0.45), transparent);
-          transition: left 0.6s;
+          top: -120%;
+          left: -60%;
+          width: 35%;
+          height: 320%;
+          background: linear-gradient(115deg, transparent, rgba(255,255,255,0.5), transparent);
+          transition: left 0.65s;
         }
         .rift-btn:hover::after {
-          left: 180%;
+          left: 220%;
         }
-
+        .glass {
+          background: rgba(10, 10, 10, 0.95);
+          backdrop-filter: blur(28px);
+        }
+        .neon-connect {
+          transition: all 0.2s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+      `}</style>
+    </div>
+  );
+}
         .rift-glitch {
           animation: rift-glitch-anim 0.18s steps(2, end) infinite;
         }
