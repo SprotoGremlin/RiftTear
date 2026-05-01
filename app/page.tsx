@@ -3,32 +3,36 @@
 import { ConnectWallet } from "@coinbase/onchainkit/wallet";
 import { useAccount } from "wagmi";
 import { motion } from "framer-motion";
-import { Play, Users, Zap, Sword, Trophy } from "lucide-react";
+import { Play, Users, Sword, Trophy, X } from "lucide-react";
 import RiftGame from "@/components/RiftGame";
+import MatchCreator from "@/components/MatchCreator";
 import { useState } from "react";
 
 export default function RiftTear() {
   const { isConnected } = useAccount();
   const [showGame, setShowGame] = useState(false);
+  const [showMatchCreator, setShowMatchCreator] = useState(false);
   const [activeMatch, setActiveMatch] = useState<any>(null);
+  const [liveMatches, setLiveMatches] = useState([
+    { id: "0x8f2a", bet: "0.05", opponent: "0x71C...4a2F", time: "2m ago" },
+    { id: "0x3c9b", bet: "0.08", opponent: "0x9f1...2d4E", time: "7m ago" },
+    { id: "0x1a7e", bet: "0.12", opponent: "0x4b2...8c9F", time: "14m ago" },
+  ]);
 
-  const createMatch = () => {
-    // TODO: OnchainKit Transaction for creating match + escrow
-    const newMatch = {
-      id: Date.now(),
+  const handleMatchCreated = (matchId: string) => {
+    setActiveMatch({
+      id: matchId,
       bet: "0.05",
-      opponent: "0x71C...4a2F",
+      opponent: "Waiting for challenger...",
       status: "waiting",
-    };
-    setActiveMatch(newMatch);
+    });
+    setShowMatchCreator(false);
     setShowGame(true);
   };
 
-  const joinMatch = () => {
+  const joinMatch = (match: any) => {
     setActiveMatch({
-      id: Date.now(),
-      bet: "0.08",
-      opponent: "0x3f2...9b1C",
+      ...match,
       status: "live",
     });
     setShowGame(true);
@@ -62,7 +66,7 @@ export default function RiftTear() {
         
         <div className="relative text-center mb-8">
           <div className="inline-flex items-center gap-2 px-5 py-1 rounded-full border border-[#0052FF]/60 text-xs tracking-[4px] text-[#0052FF] mb-6">
-            REALITY PROTOCOL v0.4 • BASE MAINNET
+            REALITY PROTOCOL v0.5 • BASE MAINNET
           </div>
 
           <h1 className="text-[110px] md:text-[148px] font-black tracking-[-8px] leading-[0.86] text-[#0052FF]">
@@ -80,13 +84,13 @@ export default function RiftTear() {
             <Play className="w-6 h-6" /> ENTER THE RIFT
           </motion.button>
 
-          <motion.a 
-            href="#matches"
+          <motion.button 
+            onClick={() => setShowMatchCreator(true)}
             className="rift-btn flex items-center justify-center gap-3 px-14 py-6 text-xl font-semibold border-2 border-white/60 hover:border-white hover:bg-white hover:text-black active:scale-[0.985] transition-all"
             whileHover={{ scale: 1.015 }}
           >
-            <Users className="w-6 h-6" /> CREATE MATCH
-          </motion.a>
+            <Sword className="w-6 h-6" /> CREATE MATCH
+          </motion.button>
         </div>
 
         <div className="mt-16 text-xs tracking-[2.5px] text-white/40 font-mono">SCROLL TO BEGIN THE FRACTURE ↓</div>
@@ -116,80 +120,59 @@ export default function RiftTear() {
         <div className="max-w-5xl mx-auto px-6">
           <div className="text-center mb-16">
             <div className="text-[#0052FF] text-xs tracking-[3px]">FULLY ONCHAIN • ESCROWED POTS</div>
-            <h2 className="text-6xl font-black tracking-tight mt-2">CREATE OR JOIN A MATCH</h2>
+            <h2 className="text-6xl font-black tracking-tight mt-2">LIVE MATCHES ON BASE</h2>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8">
-            {/* Create Match */}
-            <div className="glass p-10 border border-[#0052FF]/30 hover:border-[#0052FF] transition-all group">
+            {/* Create Match Card */}
+            <div 
+              onClick={() => setShowMatchCreator(true)}
+              className="glass p-10 border border-[#0052FF]/30 hover:border-[#0052FF] transition-all group cursor-pointer"
+            >
               <div className="flex items-center gap-4 mb-8">
                 <div className="p-4 rounded-2xl bg-[#0052FF]/10">
                   <Sword className="w-8 h-8 text-[#0052FF]" />
                 </div>
                 <div>
-                  <div className="text-3xl font-semibold tracking-tight">CREATE MATCH</div>
-                  <div className="text-sm text-white/50">Set your bet • Wait for challenger</div>
+                  <div className="text-3xl font-semibold tracking-tight">CREATE NEW MATCH</div>
+                  <div className="text-sm text-white/50">Set your bet • Real onchain escrow</div>
                 </div>
               </div>
 
-              <div className="space-y-4 mb-10">
-                <div className="flex justify-between text-sm border-b border-white/10 pb-3">
-                  <span className="text-white/60">Bet Amount</span>
-                  <span className="font-mono text-[#0052FF]">0.05 ETH</span>
-                </div>
-                <div className="flex justify-between text-sm border-b border-white/10 pb-3">
-                  <span className="text-white/60">Pot</span>
-                  <span className="font-mono">0.10 ETH</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-white/60">Network</span>
-                  <span className="text-[#0052FF]">BASE MAINNET</span>
-                </div>
+              <div className="text-center py-8 border border-dashed border-white/20 rounded-2xl group-hover:border-[#0052FF]/50 transition-all">
+                <div className="text-6xl mb-4 opacity-60">⚔️</div>
+                <div className="text-xl text-[#0052FF]">Open Match Creator</div>
+                <div className="text-xs text-white/50 mt-2 tracking-widest">GASLESS • POWERED BY PAYMASTER</div>
               </div>
-
-              <button 
-                onClick={createMatch}
-                className="w-full py-4 bg-[#0052FF] text-black font-semibold tracking-[1px] hover:bg-white transition-all active:scale-[0.985]"
-              >
-                CREATE &amp; ESCROW ONCHAIN
-              </button>
-              <div className="text-[10px] text-center text-white/40 mt-3 tracking-widest">GASLESS • POWERED BY PAYMASTER</div>
             </div>
 
-            {/* Join Match */}
-            <div className="glass p-10 border border-white/20 hover:border-white transition-all group">
-              <div className="flex items-center gap-4 mb-8">
-                <div className="p-4 rounded-2xl bg-white/10">
-                  <Trophy className="w-8 h-8 text-white" />
-                </div>
+            {/* Live Matches */}
+            <div className="glass p-10 border border-white/20">
+              <div className="flex items-center justify-between mb-8">
                 <div>
-                  <div className="text-3xl font-semibold tracking-tight">JOIN MATCH</div>
-                  <div className="text-sm text-white/50">3 active matches • 0.05–0.12 ETH</div>
+                  <div className="text-3xl font-semibold tracking-tight">OPEN MATCHES</div>
+                  <div className="text-sm text-white/50">3 active • join instantly</div>
                 </div>
+                <div className="text-xs px-3 py-1 border border-white/30 rounded-full">LIVE</div>
               </div>
 
-              <div className="space-y-3 mb-8">
-                {[0.05, 0.08, 0.12].map((amt, i) => (
+              <div className="space-y-3">
+                {liveMatches.map((match, index) => (
                   <div 
-                    key={i}
-                    onClick={joinMatch}
+                    key={index}
+                    onClick={() => joinMatch(match)}
                     className="flex items-center justify-between px-5 py-4 border border-white/10 hover:border-[#0052FF] cursor-pointer transition-all group-hover:border-white/30"
                   >
                     <div>
-                      <div className="font-mono text-lg text-[#0052FF]">{amt} ETH</div>
-                      <div className="text-xs text-white/50">vs 0x71C...4a2F • 2m ago</div>
+                      <div className="font-mono text-lg text-[#0052FF]">{match.bet} ETH</div>
+                      <div className="text-xs text-white/50">vs {match.opponent} • {match.time}</div>
                     </div>
-                    <div className="text-xs px-3 py-1 border border-white/30 rounded">JOIN</div>
+                    <div className="text-xs px-4 py-1.5 border border-[#0052FF] text-[#0052FF] rounded hover:bg-[#0052FF] hover:text-black transition-all">JOIN</div>
                   </div>
                 ))}
               </div>
 
-              <button 
-                onClick={joinMatch}
-                className="w-full py-4 border border-white/70 hover:bg-white hover:text-black font-semibold tracking-[1px] transition-all active:scale-[0.985]"
-              >
-                BROWSE ALL OPEN MATCHES
-              </button>
+              <div className="text-center text-[10px] text-white/40 mt-6 tracking-widest">All pots secured in smart contract escrow</div>
             </div>
           </div>
         </div>
@@ -217,7 +200,7 @@ export default function RiftTear() {
       </div>
 
       <footer className="border-t border-white/10 py-16 text-center text-xs tracking-[2px] text-white/40 font-mono">
-        RIFTTEAR PROTOCOL • BUILT ON BASE • COMMIT 4/100<br />
+        RIFTTEAR PROTOCOL • BUILT ON BASE • COMMIT 6/100<br />
         NOT SAFE FOR REALITY • PLAY AT YOUR OWN RISK
       </footer>
 
@@ -229,16 +212,34 @@ export default function RiftTear() {
               onClick={() => setShowGame(false)}
               className="absolute -top-14 right-0 text-white/60 hover:text-white text-sm tracking-[2px] flex items-center gap-2"
             >
-              CLOSE RIFT <span className="text-xl">×</span>
+              CLOSE RIFT <X className="w-4 h-4" />
             </button>
             
             <RiftGame />
             
             {activeMatch && (
               <div className="mt-4 text-center text-xs text-[#0052FF] font-mono tracking-widest">
-                MATCH #{activeMatch.id} • POT {parseFloat(activeMatch.bet) * 2} ETH • {activeMatch.status.toUpperCase()}
+                MATCH {activeMatch.id} • POT {parseFloat(activeMatch.bet) * 2} ETH • {activeMatch.status.toUpperCase()}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Match Creator Modal */}
+      {showMatchCreator && (
+        <div className="fixed inset-0 z-[110] bg-black/90 flex items-center justify-center p-6">
+          <div className="relative w-full max-w-md">
+            <button 
+              onClick={() => setShowMatchCreator(false)}
+              className="absolute -top-12 right-4 text-white/60 hover:text-white"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <MatchCreator 
+              onMatchCreated={handleMatchCreated} 
+              onClose={() => setShowMatchCreator(false)} 
+            />
           </div>
         </div>
       )}
@@ -268,31 +269,6 @@ export default function RiftTear() {
         }
         .neon-connect {
           transition: all 0.2s cubic-bezier(0.23, 1, 0.32, 1);
-        }
-      `}</style>
-    </div>
-  );
-}
-        .rift-glitch {
-          animation: rift-glitch-anim 0.18s steps(2, end) infinite;
-        }
-
-        @keyframes rift-glitch-anim {
-          0% { transform: translate(0); filter: hue-rotate(0deg); }
-          25% { transform: translate(-3px, 2px); filter: hue-rotate(15deg); }
-          50% { transform: translate(2px, -3px); filter: hue-rotate(-12deg); }
-          75% { transform: translate(-2px, 3px); filter: hue-rotate(8deg); }
-          100% { transform: translate(0); filter: hue-rotate(0deg); }
-        }
-
-        @keyframes rift-tear {
-          0% { transform: translateX(-120%); }
-          100% { transform: translateX(120%); }
-        }
-
-        .glass {
-          background: rgba(10, 10, 10, 0.92);
-          backdrop-filter: blur(24px);
         }
       `}</style>
     </div>
