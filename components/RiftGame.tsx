@@ -3,6 +3,15 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 
+interface RiftGameProps {
+  isMatchMode?: boolean;
+  activeMatch?: {
+    id: string;
+    bet: string;
+  } | null;
+  onGameEnd?: (score: number) => void;
+}
+
 interface Particle {
   x: number;
   y: number;
@@ -22,7 +31,11 @@ interface Obstacle {
   glitchOffset: number;
 }
 
-const RiftGame: React.FC = () => {
+const RiftGame: React.FC<RiftGameProps> = ({ 
+  isMatchMode = false, 
+  activeMatch = null, 
+  onGameEnd 
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [score, setScore] = useState(0);
   const [highScore, setHighScore] = useState(0);
@@ -49,7 +62,6 @@ const RiftGame: React.FC = () => {
     game.screenTears.push({ y: Math.random() * 400, life: 12 });
     game.screenTears.push({ y: Math.random() * 400, life: 9 });
     
-    // Spawn rift particles
     for (let i = 0; i < 28; i++) {
       game.particles.push({
         x: 180 + Math.random() * 120,
@@ -70,7 +82,6 @@ const RiftGame: React.FC = () => {
       game.player.vy = -13.5;
       game.player.onGround = false;
       
-      // Jump particles
       for (let i = 0; i < 14; i++) {
         game.particles.push({
           x: game.player.x + 18,
@@ -103,14 +114,21 @@ const RiftGame: React.FC = () => {
   }, []);
 
   const endGame = useCallback(() => {
-    setGameState('gameover');
     const finalScore = Math.floor(gameRef.current.distance);
     setScore(finalScore);
+    
     if (finalScore > highScore) {
       setHighScore(finalScore);
     }
+
+    // Trigger match end callback for onchain claiming
+    if (isMatchMode && onGameEnd) {
+      onGameEnd(finalScore);
+    }
+
     triggerMassiveGlitch();
-  }, [highScore, triggerMassiveGlitch]);
+    setGameState('gameover');
+  }, [highScore, isMatchMode, onGameEnd, triggerMassiveGlitch]);
 
   // Keyboard & Touch Controls
   useEffect(() => {
@@ -163,7 +181,6 @@ const RiftGame: React.FC = () => {
     const drawPlayer = (x: number, y: number, glitch: number) => {
       ctx.save();
       
-      // Glitch offset layers (chromatic aberration)
       const offsets = [
         { ox: -glitch * 0.6, oy: 0, color: '#ff0033' },
         { ox: glitch * 0.4, oy: 0, color: '#00ffcc' },
@@ -177,18 +194,13 @@ const RiftGame: React.FC = () => {
         const px = x + layer.ox;
         const py = y + layer.oy;
 
-        // Body (glitchy rectangle)
         ctx.fillRect(px + 6, py + 12, 30, 32);
-
-        // Head
         ctx.fillRect(px + 10, py + 2, 24, 18);
 
-        // Eyes (neon blue)
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(px + 15, py + 7, 5, 5);
         ctx.fillRect(px + 24, py + 7, 5, 5);
 
-        // Glitch eye lines
         if (glitch > 3) {
           ctx.fillStyle = '#0000FF';
           ctx.fillRect(px + 14, py + 6, 8, 2);
@@ -221,9 +233,8 @@ const RiftGame: React.FC = () => {
       game.distance += game.speed * 0.12;
       game.speed = Math.min(9.8, 6.2 + game.distance * 0.0032);
 
-      // Player physics
       const p = game.player;
-      p.vy += 0.72; // gravity
+      p.vy += 0.72;
       p.y += p.vy;
       
       const groundY = 368;
@@ -235,10 +246,8 @@ const RiftGame: React.FC = () => {
         p.onGround = false;
       }
 
-      // Ground scroll
       game.groundOffset = (game.groundOffset + game.speed) % 48;
 
-      // Spawn obstacles
       if (game.frame - game.lastSpawn > Math.max(38, 72 - game.speed * 3.8)) {
         spawnObstacle();
         game.lastSpawn = game.frame;
@@ -247,11 +256,9 @@ const RiftGame: React.FC = () => {
         }
       }
 
-      // Update obstacles
       game.obstacles = game.obstacles.filter((obs) => {
         obs.x -= game.speed;
         
-        // Collision
         const px = p.x;
         const py = p.y;
         const hit = 
@@ -267,7 +274,6 @@ const RiftGame: React.FC = () => {
         return obs.x > -80;
       });
 
-      // Update particles
       game.particles = game.particles.filter((part) => {
         part.x += part.vx;
         part.y += part.vy;
@@ -277,20 +283,16 @@ const RiftGame: React.FC = () => {
         return part.life > 0;
       });
 
-      // Screen tears
       game.screenTears = game.screenTears.filter((tear) => {
         tear.life -= 1;
         return tear.life > 0;
       });
 
-      // Chromatic decay
       if (game.chromatic > 0) game.chromatic *= 0.86;
 
-      // Score
       const newScore = Math.floor(game.distance);
       if (newScore !== score) setScore(newScore);
 
-      // Random micro-glitch
       if (Math.random() < 0.018) {
         game.chromatic = Math.max(game.chromatic, 4);
       }
@@ -300,7 +302,6 @@ const RiftGame: React.FC = () => {
       ctx.fillStyle = '#050505';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Background grid (glitchy)
       ctx.strokeStyle = '#001a33';
       ctx.lineWidth = 1;
       for (let x = -48; x < canvas.width; x += 48) {
@@ -310,7 +311,6 @@ const RiftGame: React.FC = () => {
         ctx.stroke();
       }
 
-      // Far rift lines
       ctx.strokeStyle = '#002255';
       ctx.lineWidth = 2;
       for (let i = 0; i < 5; i++) {
@@ -321,11 +321,9 @@ const RiftGame: React.FC = () => {
         ctx.stroke();
       }
 
-      // Ground
       ctx.fillStyle = '#0a0a0a';
       ctx.fillRect(0, 368, canvas.width, 160);
 
-      // Ground rift lines
       ctx.strokeStyle = '#0052FF';
       ctx.lineWidth = 1.5;
       for (let x = -48; x < canvas.width + 48; x += 48) {
@@ -335,7 +333,6 @@ const RiftGame: React.FC = () => {
         ctx.lineTo(gx, 520);
         ctx.stroke();
         
-        // Neon glow
         ctx.strokeStyle = '#3c8aff';
         ctx.lineWidth = 0.8;
         ctx.beginPath();
@@ -346,12 +343,10 @@ const RiftGame: React.FC = () => {
         ctx.lineWidth = 1.5;
       }
 
-      // Draw obstacles
       game.obstacles.forEach((obs) => {
         const glitch = Math.sin(game.frame / 3 + obs.glitchOffset) * 1.5 + game.chromatic * 0.3;
 
         if (obs.type === 'rift') {
-          // Vertical rift tear
           ctx.strokeStyle = '#0052FF';
           ctx.lineWidth = 4;
           ctx.beginPath();
@@ -366,7 +361,6 @@ const RiftGame: React.FC = () => {
           ctx.lineTo(obs.x + 1 + glitch * 0.7, obs.y + obs.height - 8);
           ctx.stroke();
 
-          // Rift glow
           ctx.fillStyle = 'rgba(0, 82, 255, 0.25)';
           ctx.fillRect(obs.x - 8, obs.y, 22, obs.height);
         } 
@@ -382,7 +376,6 @@ const RiftGame: React.FC = () => {
           ctx.strokeRect(obs.x + glitch - 1, obs.y - 1, obs.width + 2, obs.height + 2);
         } 
         else {
-          // Glitch block
           ctx.fillStyle = '#001133';
           ctx.fillRect(obs.x + glitch * 0.5, obs.y, obs.width, obs.height);
           
@@ -396,11 +389,9 @@ const RiftGame: React.FC = () => {
         }
       });
 
-      // Draw player
       const glitchAmount = game.chromatic * 0.7 + (isGlitching ? 6 : 0);
       drawPlayer(game.player.x, game.player.y, glitchAmount);
 
-      // Particles
       game.particles.forEach((p) => {
         ctx.fillStyle = p.color;
         ctx.globalAlpha = Math.max(0.2, p.life / 26);
@@ -410,7 +401,6 @@ const RiftGame: React.FC = () => {
       });
       ctx.globalAlpha = 1;
 
-      // Screen tears
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 1.5;
       game.screenTears.forEach((tear) => {
@@ -421,7 +411,6 @@ const RiftGame: React.FC = () => {
         ctx.lineTo(canvas.width, tear.y + Math.sin(game.frame / 4) * 3);
         ctx.stroke();
         
-        // Secondary tear
         ctx.strokeStyle = '#0052FF';
         ctx.beginPath();
         ctx.moveTo(0, tear.y + 2);
@@ -438,6 +427,16 @@ const RiftGame: React.FC = () => {
       
       ctx.fillStyle = '#0052FF';
       ctx.fillText(`SPEED ${(game.speed * 10).toFixed(0)}`, 32, 66);
+
+      // Match mode HUD
+      if (isMatchMode && activeMatch) {
+        ctx.fillStyle = '#0052FF';
+        ctx.font = '700 16px monospace';
+        ctx.fillText(`MATCH POT: ${(parseFloat(activeMatch.bet) * 2).toFixed(2)} ETH`, canvas.width - 280, 42);
+        
+        ctx.fillStyle = '#ffcc00';
+        ctx.fillText(`WIN THRESHOLD: 420+`, canvas.width - 280, 66);
+      }
 
       // Reality integrity bar
       const integrity = Math.max(12, 100 - (game.speed - 6.2) * 18);
@@ -458,25 +457,41 @@ const RiftGame: React.FC = () => {
       if (gameState === 'playing') {
         raf = requestAnimationFrame(loop);
       } else if (gameState === 'gameover') {
-        // Game over overlay
         ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        ctx.fillStyle = '#ff3366';
-        ctx.font = 'bold 64px monospace';
-        ctx.fillText('REALITY', 260, 198);
-        ctx.fillText('FRACTURED', 232, 268);
+        if (isMatchMode) {
+          ctx.fillStyle = '#0052FF';
+          ctx.font = 'bold 52px monospace';
+          ctx.fillText('REALITY TORN', 280, 210);
+          
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '700 22px monospace';
+          ctx.fillText(`FINAL TEAR: ${score.toString().padStart(5, '0')}`, 310, 270);
+          
+          if (score >= 420) {
+            ctx.fillStyle = '#00ffcc';
+            ctx.fillText('POT CLAIMABLE', 330, 310);
+          } else {
+            ctx.fillStyle = '#ff3366';
+            ctx.fillText('BETTER LUCK NEXT RIFT', 290, 310);
+          }
+        } else {
+          ctx.fillStyle = '#ff3366';
+          ctx.font = 'bold 64px monospace';
+          ctx.fillText('REALITY', 260, 198);
+          ctx.fillText('FRACTURED', 232, 268);
 
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '700 22px monospace';
-        ctx.fillText(`FINAL TEAR: ${score.toString().padStart(5, '0')}`, 310, 330);
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '700 22px monospace';
+          ctx.fillText(`FINAL TEAR: ${score.toString().padStart(5, '0')}`, 310, 330);
+        }
 
         ctx.fillStyle = '#0052FF';
         ctx.font = '16px monospace';
         ctx.fillText('PRESS SPACE OR TAP TO RESTART', 278, 390);
         ctx.fillText('PRESS R TO RESTART', 338, 415);
       } else {
-        // Idle screen
         ctx.fillStyle = 'rgba(0, 82, 255, 0.08)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -490,16 +505,14 @@ const RiftGame: React.FC = () => {
       }
     };
 
-    // Start loop
     if (gameState === 'playing') {
       raf = requestAnimationFrame(loop);
     } else {
-      // Draw initial frame
       draw();
     }
 
     return () => cancelAnimationFrame(raf);
-  }, [gameState, score, jump, resetGame, endGame, triggerMassiveGlitch, highScore]);
+  }, [gameState, score, jump, resetGame, endGame, triggerMassiveGlitch, highScore, isMatchMode, activeMatch]);
 
   return (
     <div className="relative flex flex-col items-center">
@@ -513,7 +526,6 @@ const RiftGame: React.FC = () => {
           }}
         />
 
-        {/* Overlay UI */}
         <div className="absolute top-4 right-4 flex flex-col items-end gap-2 z-20">
           <div className="px-4 py-1.5 bg-black/70 border border-[#0052FF]/60 text-xs tracking-[2px] font-mono text-[#0052FF]">
             HIGH TEAR: {highScore.toString().padStart(5, '0')}
@@ -542,6 +554,7 @@ const RiftGame: React.FC = () => {
 
       <div className="mt-4 flex gap-3 text-xs tracking-[1.5px] text-white/50 font-mono">
         SPACE = JUMP &nbsp;•&nbsp; G = GLITCH &nbsp;•&nbsp; R = RESTART
+        {isMatchMode && <span className="text-[#0052FF]">• MATCH MODE ACTIVE</span>}
       </div>
     </div>
   );
