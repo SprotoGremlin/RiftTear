@@ -8,6 +8,7 @@ import RiftGame from "@/components/RiftGame";
 import MatchCreator from "@/components/MatchCreator";
 import ClaimWinnings from "@/components/ClaimWinnings";
 import MatchLobby from "@/components/MatchLobby";
+import SkinGallery from "@/components/SkinGallery";
 import { useState } from "react";
 
 export default function RiftTear() {
@@ -83,7 +84,7 @@ export default function RiftTear() {
         
         <div className="relative text-center mb-8">
           <div className="inline-flex items-center gap-2 px-5 py-1 rounded-full border border-[#0052FF]/60 text-xs tracking-[4px] text-[#0052FF] mb-6">
-            REALITY PROTOCOL v0.7 • BASE MAINNET
+            REALITY PROTOCOL v0.8 • BASE MAINNET
           </div>
 
           <h1 className="text-[110px] md:text-[148px] font-black tracking-[-8px] leading-[0.86] text-[#0052FF]">
@@ -132,7 +133,7 @@ export default function RiftTear() {
         </div>
       </div>
 
-      {/* ONCHAIN MATCHES - Now using MatchLobby */}
+      {/* ONCHAIN MATCHES */}
       <div id="matches" className="relative z-20 py-24 border-t border-white/10">
         <div className="max-w-5xl mx-auto px-6">
           <div className="text-center mb-10">
@@ -148,29 +149,21 @@ export default function RiftTear() {
         </div>
       </div>
 
-      {/* SKINS TEASER */}
-      <div id="skins" className="relative z-20 py-24 border-t border-white/10 bg-zinc-950">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <div className="text-[#0052FF] text-sm tracking-[3px] mb-4">EXCLUSIVE ONCHAIN PFPS</div>
-          <h2 className="text-6xl font-black tracking-tight mb-6">RIFT PFP SKINS</h2>
-          <p className="text-2xl text-white/70 max-w-lg mx-auto">Mint. Equip. Tear harder.<br />Every skin has unique glitch animations visible in-game.</p>
-
-          <div className="mt-12 flex justify-center gap-6">
-            {[1,2,3].map((i) => (
-              <div key={i} className="w-36 h-36 rounded-3xl border border-[#0052FF]/40 bg-zinc-950 flex items-center justify-center text-6xl opacity-60 hover:opacity-100 hover:border-[#0052FF] transition-all cursor-pointer">
-                👾
-              </div>
-            ))}
+      {/* SKINS - Now full featured */}
+      <div id="skins" className="relative z-20 py-20 border-t border-white/10 bg-zinc-950">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-10">
+            <div className="text-[#0052FF] text-xs tracking-[3px]">ONCHAIN NFT PFPS</div>
+            <h2 className="text-6xl font-black tracking-tight mt-2">RIFT PFP SKINS</h2>
+            <p className="text-xl text-white/60 mt-3 max-w-md mx-auto">Mint. Equip. Tear harder. Skins appear with unique glitch effects in-game.</p>
           </div>
 
-          <button className="mt-12 px-14 py-4 border border-[#0052FF] text-sm tracking-[2px] hover:bg-[#0052FF] hover:text-black transition-all">
-            MINT RIFT SKIN — COMING COMMIT 12
-          </button>
+          <SkinGallery />
         </div>
       </div>
 
       <footer className="border-t border-white/10 py-16 text-center text-xs tracking-[2px] text-white/40 font-mono">
-        RIFTTEAR PROTOCOL • BUILT ON BASE • COMMIT 11/100<br />
+        RIFTTEAR PROTOCOL • BUILT ON BASE • COMMIT 13/100<br />
         NOT SAFE FOR REALITY • PLAY AT YOUR OWN RISK
       </footer>
 
