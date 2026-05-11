@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
 
 interface RiftGameProps {
   isMatchMode?: boolean;
@@ -10,6 +9,7 @@ interface RiftGameProps {
     bet: string;
   } | null;
   onGameEnd?: (score: number) => void;
+  equippedSkinId?: number;
 }
 
 interface Particle {
@@ -34,7 +34,8 @@ interface Obstacle {
 const RiftGame: React.FC<RiftGameProps> = ({ 
   isMatchMode = false, 
   activeMatch = null, 
-  onGameEnd 
+  onGameEnd,
+  equippedSkinId = 1 
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [score, setScore] = useState(0);
@@ -121,7 +122,6 @@ const RiftGame: React.FC<RiftGameProps> = ({
       setHighScore(finalScore);
     }
 
-    // Trigger match end callback for onchain claiming
     if (isMatchMode && onGameEnd) {
       onGameEnd(finalScore);
     }
@@ -130,7 +130,6 @@ const RiftGame: React.FC<RiftGameProps> = ({
     setGameState('gameover');
   }, [highScore, isMatchMode, onGameEnd, triggerMassiveGlitch]);
 
-  // Keyboard & Touch Controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === ' ' || e.key === 'Spacebar') {
@@ -164,7 +163,6 @@ const RiftGame: React.FC<RiftGameProps> = ({
     };
   }, [gameState, jump, resetGame, triggerMassiveGlitch]);
 
-  // Main Game Loop
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -178,13 +176,30 @@ const RiftGame: React.FC<RiftGameProps> = ({
     let raf: number;
     const game = gameRef.current;
 
-    const drawPlayer = (x: number, y: number, glitch: number) => {
+    const drawPlayer = (x: number, y: number, glitch: number, skinId: number) => {
       ctx.save();
-      
+
+      // Skin-based visual customization (NFT utility)
+      let bodyColor = '#0052FF';
+      let eyeColor = '#ffffff';
+      let extraGlitch = 0;
+
+      if (skinId === 2) { // Rare
+        bodyColor = '#3c8aff';
+        extraGlitch = 1;
+      } else if (skinId === 3) { // Epic
+        bodyColor = '#001a66';
+        extraGlitch = 2;
+      } else if (skinId === 4) { // Legendary
+        bodyColor = '#ffcc00';
+        eyeColor = '#000000';
+        extraGlitch = 4;
+      }
+
       const offsets = [
         { ox: -glitch * 0.6, oy: 0, color: '#ff0033' },
         { ox: glitch * 0.4, oy: 0, color: '#00ffcc' },
-        { ox: 0, oy: 0, color: '#0052FF' },
+        { ox: 0, oy: 0, color: bodyColor },
       ];
 
       offsets.forEach((layer, idx) => {
@@ -197,16 +212,27 @@ const RiftGame: React.FC<RiftGameProps> = ({
         ctx.fillRect(px + 6, py + 12, 30, 32);
         ctx.fillRect(px + 10, py + 2, 24, 18);
 
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = eyeColor;
         ctx.fillRect(px + 15, py + 7, 5, 5);
         ctx.fillRect(px + 24, py + 7, 5, 5);
 
-        if (glitch > 3) {
+        if (glitch + extraGlitch > 3) {
           ctx.fillStyle = '#0000FF';
           ctx.fillRect(px + 14, py + 6, 8, 2);
           ctx.fillRect(px + 23, py + 6, 8, 2);
         }
       });
+
+      // Legendary extra visual (crown-like glitch lines)
+      if (skinId === 4) {
+        ctx.strokeStyle = '#ffcc00';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x + 12, y - 2);
+        ctx.lineTo(x + 18, y + 4);
+        ctx.lineTo(x + 24, y - 2);
+        ctx.stroke();
+      }
 
       ctx.restore();
     };
@@ -390,7 +416,7 @@ const RiftGame: React.FC<RiftGameProps> = ({
       });
 
       const glitchAmount = game.chromatic * 0.7 + (isGlitching ? 6 : 0);
-      drawPlayer(game.player.x, game.player.y, glitchAmount);
+      drawPlayer(game.player.x, game.player.y, glitchAmount, equippedSkinId);
 
       game.particles.forEach((p) => {
         ctx.fillStyle = p.color;
@@ -420,7 +446,6 @@ const RiftGame: React.FC<RiftGameProps> = ({
       });
       ctx.globalAlpha = 1;
 
-      // HUD
       ctx.fillStyle = '#ffffff';
       ctx.font = '700 18px monospace';
       ctx.fillText(`SCORE ${Math.floor(game.distance).toString().padStart(5, '0')}`, 32, 42);
@@ -428,7 +453,6 @@ const RiftGame: React.FC<RiftGameProps> = ({
       ctx.fillStyle = '#0052FF';
       ctx.fillText(`SPEED ${(game.speed * 10).toFixed(0)}`, 32, 66);
 
-      // Match mode HUD
       if (isMatchMode && activeMatch) {
         ctx.fillStyle = '#0052FF';
         ctx.font = '700 16px monospace';
@@ -438,7 +462,6 @@ const RiftGame: React.FC<RiftGameProps> = ({
         ctx.fillText(`WIN THRESHOLD: 420+`, canvas.width - 280, 66);
       }
 
-      // Reality integrity bar
       const integrity = Math.max(12, 100 - (game.speed - 6.2) * 18);
       ctx.fillStyle = '#001122';
       ctx.fillRect(canvas.width - 180, 28, 148, 12);
@@ -512,7 +535,7 @@ const RiftGame: React.FC<RiftGameProps> = ({
     }
 
     return () => cancelAnimationFrame(raf);
-  }, [gameState, score, jump, resetGame, endGame, triggerMassiveGlitch, highScore, isMatchMode, activeMatch]);
+  }, [gameState, score, jump, resetGame, endGame, triggerMassiveGlitch, highScore, isMatchMode, activeMatch, equippedSkinId]);
 
   return (
     <div className="relative flex flex-col items-center">
@@ -532,13 +555,12 @@ const RiftGame: React.FC<RiftGameProps> = ({
           </div>
           
           {gameState === 'playing' && (
-            <motion.button
+            <button
               onClick={triggerMassiveGlitch}
               className="px-5 py-2 text-xs tracking-[2px] border border-[#0052FF] hover:bg-[#0052FF] hover:text-black transition-all font-mono"
-              whileHover={{ scale: 1.05 }}
             >
               TEAR REALITY [G]
-            </motion.button>
+            </button>
           )}
         </div>
 
