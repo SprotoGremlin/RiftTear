@@ -18,6 +18,7 @@ export default function RiftTear() {
   const [showClaim, setShowClaim] = useState(false);
   const [activeMatch, setActiveMatch] = useState<any>(null);
   const [finalScore, setFinalScore] = useState(0);
+  const [equippedSkinId, setEquippedSkinId] = useState(1);
   const [liveMatches, setLiveMatches] = useState([
     { id: "0x8f2a", bet: "0.05", opponent: "0x71C...4a2F", time: "2m ago" },
     { id: "0x3c9b", bet: "0.08", opponent: "0x9f1...2d4E", time: "7m ago" },
@@ -84,7 +85,7 @@ export default function RiftTear() {
         
         <div className="relative text-center mb-8">
           <div className="inline-flex items-center gap-2 px-5 py-1 rounded-full border border-[#0052FF]/60 text-xs tracking-[4px] text-[#0052FF] mb-6">
-            REALITY PROTOCOL v0.8 • BASE MAINNET
+            REALITY PROTOCOL v0.9 • BASE MAINNET
           </div>
 
           <h1 className="text-[110px] md:text-[148px] font-black tracking-[-8px] leading-[0.86] text-[#0052FF]">
@@ -124,11 +125,13 @@ export default function RiftTear() {
           </div>
 
           <div className="flex justify-center">
-            <RiftGame />
+            <RiftGame 
+              equippedSkinId={equippedSkinId}
+            />
           </div>
 
           <div className="text-center mt-8 text-xs tracking-[1px] text-white/50 font-mono">
-            SPACE = JUMP &nbsp;•&nbsp; G = MASSIVE GLITCH &nbsp;•&nbsp; TAP SCREEN ON MOBILE
+            SPACE = JUMP &nbsp;•&nbsp; G = MASSIVE GLITCH &nbsp;•&nbsp; TAP SCREEN ON MOBILE • EQUIPPED SKIN AFFECTS YOUR RUNNER
           </div>
         </div>
       </div>
@@ -149,13 +152,13 @@ export default function RiftTear() {
         </div>
       </div>
 
-      {/* SKINS - Now full featured */}
+      {/* SKINS - Full NFT utility */}
       <div id="skins" className="relative z-20 py-20 border-t border-white/10 bg-zinc-950">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-10">
             <div className="text-[#0052FF] text-xs tracking-[3px]">ONCHAIN NFT PFPS</div>
             <h2 className="text-6xl font-black tracking-tight mt-2">RIFT PFP SKINS</h2>
-            <p className="text-xl text-white/60 mt-3 max-w-md mx-auto">Mint. Equip. Tear harder. Skins appear with unique glitch effects in-game.</p>
+            <p className="text-xl text-white/60 mt-3 max-w-md mx-auto">Mint. Equip. Tear harder. Your skin changes how you look in-game.</p>
           </div>
 
           <SkinGallery />
@@ -163,11 +166,11 @@ export default function RiftTear() {
       </div>
 
       <footer className="border-t border-white/10 py-16 text-center text-xs tracking-[2px] text-white/40 font-mono">
-        RIFTTEAR PROTOCOL • BUILT ON BASE • COMMIT 13/100<br />
+        RIFTTEAR PROTOCOL • BUILT ON BASE • COMMIT 16/100<br />
         NOT SAFE FOR REALITY • PLAY AT YOUR OWN RISK
       </footer>
 
-      {/* Fullscreen Game Modal (with Match Mode) */}
+      {/* Fullscreen Game Modal (with Match Mode + Skin) */}
       {showGame && (
         <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4">
           <div className="relative w-full max-w-[980px]">
@@ -182,6 +185,7 @@ export default function RiftTear() {
               isMatchMode={!!activeMatch}
               activeMatch={activeMatch}
               onGameEnd={handleGameEnd}
+              equippedSkinId={equippedSkinId}
             />
             
             {activeMatch && (
