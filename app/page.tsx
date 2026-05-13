@@ -9,7 +9,7 @@ import MatchCreator from "@/components/MatchCreator";
 import ClaimWinnings from "@/components/ClaimWinnings";
 import MatchLobby from "@/components/MatchLobby";
 import SkinGallery from "@/components/SkinGallery";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function RiftTear() {
   const { isConnected } = useAccount();
@@ -24,6 +24,16 @@ export default function RiftTear() {
     { id: "0x3c9b", bet: "0.08", opponent: "0x9f1...2d4E", time: "7m ago" },
     { id: "0x1a7e", bet: "0.12", opponent: "0x4b2...8c9F", time: "14m ago" },
   ]);
+
+  // Persist equipped skin
+  useEffect(() => {
+    const saved = localStorage.getItem("equippedSkinId");
+    if (saved) setEquippedSkinId(parseInt(saved));
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("equippedSkinId", equippedSkinId.toString());
+  }, [equippedSkinId]);
 
   const handleMatchCreated = (matchId: string) => {
     setActiveMatch({
@@ -85,7 +95,7 @@ export default function RiftTear() {
         
         <div className="relative text-center mb-8">
           <div className="inline-flex items-center gap-2 px-5 py-1 rounded-full border border-[#0052FF]/60 text-xs tracking-[4px] text-[#0052FF] mb-6">
-            REALITY PROTOCOL v0.9 • BASE MAINNET
+            REALITY PROTOCOL v1.0 • BASE MAINNET
           </div>
 
           <h1 className="text-[110px] md:text-[148px] font-black tracking-[-8px] leading-[0.86] text-[#0052FF]">
@@ -131,7 +141,7 @@ export default function RiftTear() {
           </div>
 
           <div className="text-center mt-8 text-xs tracking-[1px] text-white/50 font-mono">
-            SPACE = JUMP &nbsp;•&nbsp; G = MASSIVE GLITCH &nbsp;•&nbsp; TAP SCREEN ON MOBILE • EQUIPPED SKIN AFFECTS YOUR RUNNER
+            SPACE = JUMP &nbsp;•&nbsp; G = MASSIVE GLITCH &nbsp;•&nbsp; TAP SCREEN ON MOBILE • YOUR SKIN AFFECTS THE RUNNER
           </div>
         </div>
       </div>
@@ -166,7 +176,7 @@ export default function RiftTear() {
       </div>
 
       <footer className="border-t border-white/10 py-16 text-center text-xs tracking-[2px] text-white/40 font-mono">
-        RIFTTEAR PROTOCOL • BUILT ON BASE • COMMIT 16/100<br />
+        RIFTTEAR PROTOCOL • BUILT ON BASE • COMMIT 17/100<br />
         NOT SAFE FOR REALITY • PLAY AT YOUR OWN RISK
       </footer>
 
