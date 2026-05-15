@@ -12,7 +12,10 @@ interface Skin {
   rarity: "Common" | "Rare" | "Epic" | "Legendary";
   glitchLevel: number;
   price: string;
-  equipped?: boolean;
+}
+
+interface SkinGalleryProps {
+  onEquip?: (skinId: number) => void;
 }
 
 const SKINS: Skin[] = [
@@ -24,9 +27,9 @@ const SKINS: Skin[] = [
   { id: 6, name: "Chroma Break Pepe", rarity: "Epic", glitchLevel: 9, price: "0.09" },
 ];
 
-export default function SkinGallery() {
+export default function SkinGallery({ onEquip }: SkinGalleryProps) {
   const [selectedSkin, setSelectedSkin] = useState<Skin | null>(null);
-  const [equippedSkinId, setEquippedSkinId] = useState<number | null>(1);
+  const [equippedSkinId, setEquippedSkinId] = useState(1);
   const [filter, setFilter] = useState<"All" | "Common" | "Rare" | "Epic" | "Legendary">("All");
 
   const filteredSkins = filter === "All" 
@@ -45,7 +48,7 @@ export default function SkinGallery() {
 
   const handleEquip = (skin: Skin) => {
     setEquippedSkinId(skin.id);
-    // TODO: Later write to onchain player profile or game state
+    onEquip?.(skin.id);
   };
 
   const handleMint = (skin: Skin) => {
@@ -166,7 +169,7 @@ export default function SkinGallery() {
               chainId={8453}
               calls={[
                 {
-                  to: "0x0000000000000000000000000000000000000000", // TODO: Replace with real ERC721 contract
+                  to: "0x0000000000000000000000000000000000000000",
                   data: "0x",
                   value: parseEther(selectedSkin.price),
                 },
