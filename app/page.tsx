@@ -162,7 +162,7 @@ export default function RiftTear() {
         </div>
       </div>
 
-      {/* SKINS - Full NFT utility */}
+      {/* SKINS - Full NFT utility with wiring */}
       <div id="skins" className="relative z-20 py-20 border-t border-white/10 bg-zinc-950">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-10">
@@ -171,12 +171,12 @@ export default function RiftTear() {
             <p className="text-xl text-white/60 mt-3 max-w-md mx-auto">Mint. Equip. Tear harder. Your skin changes how you look in-game.</p>
           </div>
 
-          <SkinGallery />
+          <SkinGallery onEquip={setEquippedSkinId} />
         </div>
       </div>
 
       <footer className="border-t border-white/10 py-16 text-center text-xs tracking-[2px] text-white/40 font-mono">
-        RIFTTEAR PROTOCOL • BUILT ON BASE • COMMIT 17/100<br />
+        RIFTTEAR PROTOCOL • BUILT ON BASE • COMMIT 20/100<br />
         NOT SAFE FOR REALITY • PLAY AT YOUR OWN RISK
       </footer>
 
