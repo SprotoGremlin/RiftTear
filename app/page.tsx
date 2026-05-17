@@ -11,6 +11,15 @@ import MatchLobby from "@/components/MatchLobby";
 import SkinGallery from "@/components/SkinGallery";
 import { useState, useEffect } from "react";
 
+const SKINS = [
+  { id: 1, name: "Glitch Pepe #001" },
+  { id: 2, name: "Neon Tear Pepe" },
+  { id: 3, name: "Void Rift Pepe" },
+  { id: 4, name: "Reality Fracture Pepe" },
+  { id: 5, name: "Digital Decay Pepe" },
+  { id: 6, name: "Chroma Break Pepe" },
+];
+
 export default function RiftTear() {
   const { isConnected } = useAccount();
   const [showGame, setShowGame] = useState(false);
@@ -34,6 +43,11 @@ export default function RiftTear() {
   useEffect(() => {
     localStorage.setItem("equippedSkinId", equippedSkinId.toString());
   }, [equippedSkinId]);
+
+  const getEquippedSkinName = () => {
+    const skin = SKINS.find(s => s.id === equippedSkinId);
+    return skin ? skin.name : "Default";
+  };
 
   const handleMatchCreated = (matchId: string) => {
     setActiveMatch({
@@ -82,6 +96,9 @@ export default function RiftTear() {
         </div>
 
         <div className="flex items-center gap-4 text-sm">
+          <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full text-xs text-[#0052FF] border border-white/10">
+            SKIN: {getEquippedSkinName()}
+          </div>
           <a href="#game" className="hover:text-[#0052FF] transition-colors px-4 py-2 tracking-[1px]">PLAY</a>
           <a href="#matches" className="hover:text-[#0052FF] transition-colors px-4 py-2 tracking-[1px]">MATCHES</a>
           <a href="#skins" className="hover:text-[#0052FF] transition-colors px-4 py-2 tracking-[1px]">SKINS</a>
@@ -176,7 +193,7 @@ export default function RiftTear() {
       </div>
 
       <footer className="border-t border-white/10 py-16 text-center text-xs tracking-[2px] text-white/40 font-mono">
-        RIFTTEAR PROTOCOL • BUILT ON BASE • COMMIT 20/100<br />
+        RIFTTEAR PROTOCOL • BUILT ON BASE • COMMIT 21/100<br />
         NOT SAFE FOR REALITY • PLAY AT YOUR OWN RISK
       </footer>
 
