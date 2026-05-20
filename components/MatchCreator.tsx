@@ -6,6 +6,7 @@ import { useAccount } from "wagmi";
 import { parseEther } from "viem";
 import { motion } from "framer-motion";
 import { Zap, Clock } from "lucide-react";
+import { MATCH_CONTRACT_ADDRESS, MATCH_CONTRACT_ABI } from "@/lib/contracts";
 
 interface MatchCreatorProps {
   onMatchCreated?: (matchId: string) => void;
@@ -17,11 +18,10 @@ export default function MatchCreator({ onMatchCreated, onClose }: MatchCreatorPr
   const [betAmount, setBetAmount] = useState("0.05");
 
   const quickBets = ["0.02", "0.05", "0.1", "0.25"];
-  const MATCH_CONTRACT = "0x0000000000000000000000000000000000000000" as `0x${string}`;
 
   const calls = [
     {
-      to: MATCH_CONTRACT,
+      to: MATCH_CONTRACT_ADDRESS,
       data: "0x" as `0x${string}`,
       value: parseEther(betAmount),
     },
