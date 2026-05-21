@@ -3,6 +3,7 @@
 import { Transaction, TransactionButton, TransactionStatus, TransactionStatusLabel } from "@coinbase/onchainkit/transaction";
 import { parseEther } from "viem";
 import { Trophy, Zap } from "lucide-react";
+import { MATCH_CONTRACT_ADDRESS, MATCH_CONTRACT_ABI } from "@/lib/contracts";
 
 interface ClaimWinningsProps {
   matchId: string;
@@ -12,12 +13,10 @@ interface ClaimWinningsProps {
 }
 
 export default function ClaimWinnings({ matchId, potAmount, onClaimSuccess, onClose }: ClaimWinningsProps) {
-  const MATCH_CONTRACT = "0x0000000000000000000000000000000000000000" as `0x${string}`;
-
   const calls = [
     {
-      to: MATCH_CONTRACT,
-      data: "0x", // TODO: Replace with actual claimWinnings(matchId) calldata
+      to: MATCH_CONTRACT_ADDRESS,
+      data: "0x" as `0x${string}`,
       value: BigInt(0),
     },
   ];
