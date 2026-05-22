@@ -3,7 +3,7 @@
 import { ConnectWallet } from "@coinbase/onchainkit/wallet";
 import { useAccount } from "wagmi";
 import { motion } from "framer-motion";
-import { Play, Sword, X } from "lucide-react";
+import { Play, Sword, X, HelpCircle } from "lucide-react";
 import RiftGame from "@/components/RiftGame";
 import MatchCreator from "@/components/MatchCreator";
 import ClaimWinnings from "@/components/ClaimWinnings";
@@ -25,6 +25,7 @@ export default function RiftTear() {
   const [showGame, setShowGame] = useState(false);
   const [showMatchCreator, setShowMatchCreator] = useState(false);
   const [showClaim, setShowClaim] = useState(false);
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [activeMatch, setActiveMatch] = useState<any>(null);
   const [finalScore, setFinalScore] = useState(0);
   const [equippedSkinId, setEquippedSkinId] = useState(1);
@@ -139,7 +140,14 @@ export default function RiftTear() {
           </motion.button>
         </div>
 
-        <div className="mt-16 text-xs tracking-[2.5px] text-white/40 font-mono">SCROLL TO BEGIN THE FRACTURE ↓</div>
+        <button 
+          onClick={() => setShowHowItWorks(true)}
+          className="mt-8 flex items-center gap-2 text-sm text-white/60 hover:text-white transition-colors tracking-[1px]"
+        >
+          <HelpCircle className="w-4 h-4" /> HOW IT WORKS
+        </button>
+
+        <div className="mt-8 text-xs tracking-[2.5px] text-white/40 font-mono">SCROLL TO BEGIN THE FRACTURE ↓</div>
       </div>
 
       {/* GAME SECTION (Free Play) */}
@@ -193,7 +201,7 @@ export default function RiftTear() {
       </div>
 
       <footer className="border-t border-white/10 py-16 text-center text-xs tracking-[2px] text-white/40 font-mono">
-        RIFTTEAR PROTOCOL • BUILT ON BASE • COMMIT 21/100<br />
+        RIFTTEAR PROTOCOL • BUILT ON BASE • COMMIT 25/100<br />
         NOT SAFE FOR REALITY • PLAY AT YOUR OWN RISK
       </footer>
 
@@ -252,6 +260,68 @@ export default function RiftTear() {
               onClaimSuccess={closeClaim}
               onClose={closeClaim}
             />
+          </div>
+        </div>
+      )}
+
+      {/* How it Works Modal */}
+      {showHowItWorks && (
+        <div className="fixed inset-0 z-[130] bg-black/90 flex items-center justify-center p-6">
+          <div className="glass w-full max-w-2xl p-10 border border-[#0052FF]/40 relative">
+            <button 
+              onClick={() => setShowHowItWorks(false)}
+              className="absolute top-6 right-6 text-white/60 hover:text-white text-2xl"
+            >
+              ×
+            </button>
+
+            <div className="text-4xl font-black tracking-tight mb-8 text-center">HOW IT WORKS</div>
+
+            <div className="space-y-8 text-lg">
+              <div className="flex gap-6">
+                <div className="w-12 h-12 rounded-full bg-[#0052FF]/10 flex items-center justify-center flex-shrink-0 text-[#0052FF] font-mono text-xl">1</div>
+                <div>
+                  <div className="font-semibold mb-1">Connect Wallet</div>
+                  <div className="text-white/70 text-base">Connect your Base wallet (Coinbase Wallet, MetaMask, etc.) to start playing and betting.</div>
+                </div>
+              </div>
+
+              <div className="flex gap-6">
+                <div className="w-12 h-12 rounded-full bg-[#0052FF]/10 flex items-center justify-center flex-shrink-0 text-[#0052FF] font-mono text-xl">2</div>
+                <div>
+                  <div className="font-semibold mb-1">Equip a Skin (Optional)</div>
+                  <div className="text-white/70 text-base">Mint or equip one of the glitch Pepe PFPs. Your skin changes how your runner looks in-game with unique effects.</div>
+                </div>
+              </div>
+
+              <div className="flex gap-6">
+                <div className="w-12 h-12 rounded-full bg-[#0052FF]/10 flex items-center justify-center flex-shrink-0 text-[#0052FF] font-mono text-xl">3</div>
+                <div>
+                  <div className="font-semibold mb-1">Create or Join a Match</div>
+                  <div className="text-white/70 text-base">Set your bet amount and create a match, or join an existing one. Both players' bets are escrowed onchain in a smart contract.</div>
+                </div>
+              </div>
+
+              <div className="flex gap-6">
+                <div className="w-12 h-12 rounded-full bg-[#0052FF]/10 flex items-center justify-center flex-shrink-0 text-[#0052FF] font-mono text-xl">4</div>
+                <div>
+                  <div className="font-semibold mb-1">Play the Game</div>
+                  <div className="text-white/70 text-base">Jump, dodge, and tear reality. The player with the highest score wins the entire pot. Score 420+ in a match to claim winnings.</div>
+                </div>
+              </div>
+
+              <div className="flex gap-6">
+                <div className="w-12 h-12 rounded-full bg-[#0052FF]/10 flex items-center justify-center flex-shrink-0 text-[#0052FF] font-mono text-xl">5</div>
+                <div>
+                  <div className="font-semibold mb-1">Claim Your Winnings</div>
+                  <div className="text-white/70 text-base">If you win, claim the pot directly to your wallet via the onchain transaction. Everything is fully verifiable on Base.</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-10 text-center text-sm text-white/50 tracking-widest">
+              POWERED BY ONCHAINKIT • BASE MAINNET • GASLESS TRANSACTIONS
+            </div>
           </div>
         </div>
       )}
