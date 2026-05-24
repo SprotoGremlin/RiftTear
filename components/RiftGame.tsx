@@ -460,6 +460,13 @@ const RiftGame: React.FC<RiftGameProps> = ({
         
         ctx.fillStyle = '#ffcc00';
         ctx.fillText(`WIN THRESHOLD: 420+`, canvas.width - 280, 66);
+
+        // Win threshold progress bar
+        const progress = Math.min(1, game.distance / 420);
+        ctx.fillStyle = '#001122';
+        ctx.fillRect(canvas.width - 280, 82, 180, 8);
+        ctx.fillStyle = progress > 0.9 ? '#00ffcc' : '#0052FF';
+        ctx.fillRect(canvas.width - 278, 84, progress * 176, 4);
       }
 
       const integrity = Math.max(12, 100 - (game.speed - 6.2) * 18);
