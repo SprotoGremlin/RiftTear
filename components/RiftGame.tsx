@@ -130,6 +130,12 @@ const RiftGame: React.FC<RiftGameProps> = ({
     setGameState('gameover');
   }, [highScore, isMatchMode, onGameEnd, triggerMassiveGlitch]);
 
+  const shareScore = useCallback(() => {
+    const text = `I just scored ${score} in RiftTear on Base! 🔥 Join the tear: https://riftttear.base`;
+    navigator.clipboard.writeText(text);
+    alert("Score copied to clipboard! Share it on X or Discord.");
+  }, [score]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === ' ' || e.key === 'Spacebar') {
@@ -506,6 +512,11 @@ const RiftGame: React.FC<RiftGameProps> = ({
             ctx.fillStyle = '#ff3366';
             ctx.fillText('BETTER LUCK NEXT RIFT', 290, 310);
           }
+
+          // Share button
+          ctx.fillStyle = '#0052FF';
+          ctx.font = '14px monospace';
+          ctx.fillText('PRESS S TO SHARE YOUR TEAR', 280, 360);
         } else {
           ctx.fillStyle = '#ff3366';
           ctx.font = 'bold 64px monospace';
@@ -542,7 +553,20 @@ const RiftGame: React.FC<RiftGameProps> = ({
     }
 
     return () => cancelAnimationFrame(raf);
-  }, [gameState, score, jump, resetGame, endGame, triggerMassiveGlitch, highScore, isMatchMode, activeMatch, equippedSkinId]);
+  }, [gameState, score, jump, resetGame, endGame, triggerMassiveGlitch, highScore, isMatchMode, activeMatch, equippedSkinId, shareScore]);
+
+  // Keyboard share
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === 's' && gameState === 'gameover' && isMatchMode) {
+        const text = `I just scored ${score} in RiftTear on Base! 🔥 Join the tear: https://riftttear.base`;
+        navigator.clipboard.writeText(text);
+        alert("Score copied to clipboard! Share it on X or Discord.");
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [gameState, isMatchMode, score]);
 
   return (
     <div className="relative flex flex-col items-center">
@@ -582,7 +606,7 @@ const RiftGame: React.FC<RiftGameProps> = ({
       </div>
 
       <div className="mt-4 flex gap-3 text-xs tracking-[1.5px] text-white/50 font-mono">
-        SPACE = JUMP &nbsp;•&nbsp; G = GLITCH &nbsp;•&nbsp; R = RESTART
+        SPACE = JUMP &nbsp;•&nbsp; G = GLITCH &nbsp;•&nbsp; R = RESTART &nbsp;•&nbsp; S = SHARE (GAME OVER)
         {isMatchMode && <span className="text-[#0052FF]">• MATCH MODE ACTIVE</span>}
       </div>
     </div>
