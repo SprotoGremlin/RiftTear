@@ -149,6 +149,9 @@ const RiftGame: React.FC<RiftGameProps> = ({
       if (e.key.toLowerCase() === 'g') {
         triggerMassiveGlitch();
       }
+      if (e.key.toLowerCase() === 's' && gameState === 'gameover' && isMatchMode) {
+        shareScore();
+      }
     };
 
     const handleTouchStart = (e: TouchEvent) => {
@@ -167,7 +170,7 @@ const RiftGame: React.FC<RiftGameProps> = ({
       window.removeEventListener('keydown', handleKeyDown);
       if (canvas) canvas.removeEventListener('touchstart', handleTouchStart);
     };
-  }, [gameState, jump, resetGame, triggerMassiveGlitch]);
+  }, [gameState, jump, resetGame, triggerMassiveGlitch, shareScore]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -513,7 +516,7 @@ const RiftGame: React.FC<RiftGameProps> = ({
             ctx.fillText('BETTER LUCK NEXT RIFT', 290, 310);
           }
 
-          // Share button
+          // Share button hint
           ctx.fillStyle = '#0052FF';
           ctx.font = '14px monospace';
           ctx.fillText('PRESS S TO SHARE YOUR TEAR', 280, 360);
@@ -542,7 +545,7 @@ const RiftGame: React.FC<RiftGameProps> = ({
 
         ctx.fillStyle = '#ffffff';
         ctx.font = '16px monospace';
-        ctx.fillText('JUMP = SPACE / TAP  •  MASSIVE GLITCH = G', 228, 290);
+        ctx.fillText('JUMP = SPACE / TAP  •  MASSIVE GLITCH = G  •  HOW TO PLAY = H', 178, 290);
       }
     };
 
@@ -555,18 +558,20 @@ const RiftGame: React.FC<RiftGameProps> = ({
     return () => cancelAnimationFrame(raf);
   }, [gameState, score, jump, resetGame, endGame, triggerMassiveGlitch, highScore, isMatchMode, activeMatch, equippedSkinId, shareScore]);
 
-  // Keyboard share
+  // Keyboard handlers for share and how to play
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === 's' && gameState === 'gameover' && isMatchMode) {
-        const text = `I just scored ${score} in RiftTear on Base! 🔥 Join the tear: https://riftttear.base`;
-        navigator.clipboard.writeText(text);
-        alert("Score copied to clipboard! Share it on X or Discord.");
+        shareScore();
+      }
+      if (e.key.toLowerCase() === 'h' && gameState === 'idle') {
+        // Trigger parent modal if available (simplified for component)
+        alert("HOW TO PLAY: Press SPACE to jump • G for massive glitch • Avoid obstacles • Highest score wins the pot!");
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [gameState, isMatchMode, score]);
+  }, [gameState, isMatchMode, shareScore]);
 
   return (
     <div className="relative flex flex-col items-center">
@@ -600,13 +605,14 @@ const RiftGame: React.FC<RiftGameProps> = ({
             <div className="text-center">
               <div className="text-[11px] tracking-[4px] text-[#0052FF] mb-2">BASE • ONCHAINKIT • WAGMI</div>
               <div className="text-7xl font-black tracking-[-3px] text-white">RIFTTEAR</div>
+              <div className="mt-4 text-xs text-[#0052FF] tracking-[1px]">PRESS H FOR HOW TO PLAY</div>
             </div>
           </div>
         )}
       </div>
 
       <div className="mt-4 flex gap-3 text-xs tracking-[1.5px] text-white/50 font-mono">
-        SPACE = JUMP &nbsp;•&nbsp; G = GLITCH &nbsp;•&nbsp; R = RESTART &nbsp;•&nbsp; S = SHARE (GAME OVER)
+        SPACE = JUMP &nbsp;•&nbsp; G = GLITCH &nbsp;•&nbsp; R = RESTART &nbsp;•&nbsp; S = SHARE (GAME OVER) &nbsp;•&nbsp; H = HOW TO PLAY
         {isMatchMode && <span className="text-[#0052FF]">• MATCH MODE ACTIVE</span>}
       </div>
     </div>
