@@ -1,46 +1,83 @@
 "use client";
 
-import { useState } from "react";
-import { Trophy, Zap, Flame } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Trophy, Zap, Flame, CheckCircle } from "lucide-react";
 
 const mockLeaders = [
-  { rank: 1, address: "0x8f3...a2b", score: 18420, skin: "Legendary Rift King", color: "#ffcc00" },
-  { rank: 2, address: "0x4d7...f9c", score: 16280, skin: "Epic Void Runner", color: "#001a66" },
-  { rank: 3, address: "0x2e9...b1d", score: 15440, skin: "Rare Glitch Phantom", color: "#3c8aff" },
-  { rank: 4, address: "0x7a1...e8f", score: 14210, skin: "Common Base Blazer", color: "#0052FF" },
-  { rank: 5, address: "0x9c3...d4e", score: 13890, skin: "Common Base Blazer", color: "#0052FF" },
+  { rank: 1, address: "0x8f3...a2b", score: 18420, skin: "Legendary Rift King", color: "#ffcc00", verified: true },
+  { rank: 2, address: "0x4d7...f9c", score: 16280, skin: "Epic Void Runner", color: "#001a66", verified: true },
+  { rank: 3, address: "0x2e9...b1d", score: 15440, skin: "Rare Glitch Phantom", color: "#3c8aff", verified: true },
+  { rank: 4, address: "0x7a1...e8f", score: 14210, skin: "Common Base Blazer", color: "#0052FF", verified: false },
+  { rank: 5, address: "0x9c3...d4e", score: 13890, skin: "Common Base Blazer", color: "#0052FF", verified: false },
 ];
 
 export default function Leaderboard() {
+  const [leaders, setLeaders] = useState(mockLeaders);
   const [selectedRank, setSelectedRank] = useState<number | null>(null);
+  const [glitchTrigger, setGlitchTrigger] = useState(0);
+
+  // Reality-breaking glitch pulse every 8 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setGlitchTrigger((prev) => prev + 1);
+      // Shuffle one random entry for live feel
+      setLeaders((prev) => {
+        const copy = [...prev];
+        const idx = Math.floor(Math.random() * copy.length);
+        const temp = copy[idx];
+        copy[idx] = copy[(idx + 1) % copy.length];
+        copy[(idx + 1) % copy.length] = temp;
+        return copy;
+      });
+    }, 8000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <div className="glass w-full max-w-2xl mx-auto p-6 border border-[#0052FF]/30">
+    <div className="glass w-full max-w-2xl mx-auto p-6 border border-[#0052FF]/30 relative overflow-hidden">
+      {/* Glitch overlay */}
+      <div
+        key={glitchTrigger}
+        className="absolute inset-0 bg-[repeating-linear-gradient(45deg,#0052FF_0,#0052FF_2px,transparent_2px,transparent_6px)] opacity-10 pointer-events-none animate-[glitch_0.3s_linear_infinite]"
+        style={{
+          animation: glitchTrigger % 2 === 0 ? "glitch 120ms linear infinite" : "none",
+        }}
+      />
+
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Trophy className="w-7 h-7 text-[#ffcc00]" />
           <div>
             <div className="text-3xl font-black tracking-[-1px]">GLOBAL LEADERBOARD</div>
-            <div className="text-xs text-[#0052FF] tracking-[2px]">TOP RIFT TEARS • ONCHAIN</div>
+            <div className="text-xs text-[#0052FF] tracking-[2px]">TOP RIFT TEARS • LIVE ON BASE</div>
           </div>
         </div>
-        <div className="text-xs px-4 py-2 bg-black/60 border border-[#0052FF]/40 rounded-2xl font-mono flex items-center gap-2">
+        <div className="flex items-center gap-2 text-xs px-4 py-2 bg-black/60 border border-[#0052FF]/40 rounded-2xl font-mono">
           <Flame className="w-3.5 h-3.5 text-[#ff3366]" />
-          LIVE
+          <span className="text-[#00ffcc]">4,821</span>
+          <span className="text-white/60">TEARS THIS HOUR</span>
         </div>
       </div>
 
       <div className="space-y-2">
-        {mockLeaders.map((leader) => (
+        {leaders.map((leader) => (
           <div
             key={leader.rank}
             onClick={() => setSelectedRank(leader.rank)}
-            className={`group flex items-center justify-between px-6 py-4 rounded-3xl border transition-all cursor-pointer ${
+            className={`group flex items-center justify-between px-6 py-4 rounded-3xl border transition-all cursor-pointer relative ${
               selectedRank === leader.rank
                 ? "border-[#ffcc00] bg-[#ffcc00]/10"
                 : "border-white/10 hover:border-[#0052FF]/60 hover:bg-white/5"
             }`}
           >
+            {/* Verified badge */}
+            {leader.verified && (
+              <div className="absolute -top-1 -right-1 bg-[#00ffcc] text-black text-[10px] font-bold px-2 py-0.5 rounded-bl-3xl flex items-center gap-1">
+                <CheckCircle className="w-3 h-3" />
+                ONCHAIN
+              </div>
+            )}
+
             <div className="flex items-center gap-6">
               <div
                 className={`w-8 h-8 flex items-center justify-center rounded-2xl font-black text-xl ${
@@ -86,9 +123,21 @@ export default function Leaderboard() {
 
       <div className="mt-8 text-center text-xs text-white/40 font-mono tracking-widest flex items-center justify-center gap-4">
         <div className="h-px w-12 bg-white/20"></div>
-        REALITY LEADERBOARD • UPDATED LIVE ON BASE
+        REALITY LEADERBOARD • VERIFIED ON BASESCAN
         <div className="h-px w-12 bg-white/20"></div>
       </div>
+
+      {/* CSS for glitch animation */}
+      <style jsx>{`
+        @keyframes glitch {
+          0% { transform: translate(0); }
+          20% { transform: translate(-2px, 2px); }
+          40% { transform: translate(-2px, -2px); }
+          60% { transform: translate(2px, 2px); }
+          80% { transform: translate(2px, -2px); }
+          100% { transform: translate(0); }
+        }
+      `}</style>
     </div>
   );
 }
