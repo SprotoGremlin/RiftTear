@@ -19,6 +19,15 @@ export default function Home() {
   ]);
   const [activeMatch, setActiveMatch] = useState<any>(null);
 
+  // Live leaderboard state (mock onchain data)
+  const [leaderboardData, setLeaderboardData] = useState([
+    { rank: 1, address: "0x8f3...a2b", score: 18420, skin: "Legendary Rift King", color: "#ffcc00", verified: true },
+    { rank: 2, address: "0x4d7...f9c", score: 16280, skin: "Epic Void Runner", color: "#001a66", verified: true },
+    { rank: 3, address: "0x2e9...b1d", score: 15440, skin: "Rare Glitch Phantom", color: "#3c8aff", verified: true },
+    { rank: 4, address: "0x7a1...e8f", score: 14210, skin: "Common Base Blazer", color: "#0052FF", verified: false },
+    { rank: 5, address: "0x9c3...d4e", score: 13890, skin: "Common Base Blazer", color: "#0052FF", verified: false },
+  ]);
+
   const handleEquipSkin = (id: number) => {
     setEquippedSkinId(id);
     localStorage.setItem("equippedSkinId", id.toString());
@@ -26,14 +35,27 @@ export default function Home() {
 
   const handleMatchCreated = (matchId: string) => {
     console.log("Match created:", matchId);
-    // Future: refresh live matches
   };
 
   const handleGameEnd = (score: number) => {
     console.log("Game ended with score:", score);
     if (score >= 420) {
-      // Future: auto-open claim modal
+      // Future: auto-open claim
     }
+    // Live sync to leaderboard
+    setLeaderboardData((prev) => {
+      const newEntry = {
+        rank: prev.length + 1,
+        address: address ? address.slice(0, 6) + "..." + address.slice(-4) : "0xYOU...",
+        score: score,
+        skin: `Skin #${equippedSkinId}`,
+        color: "#0052FF",
+        verified: true,
+      };
+      const updated = [newEntry, ...prev].slice(0, 5);
+      // Re-rank
+      return updated.map((entry, i) => ({ ...entry, rank: i + 1 }));
+    });
   };
 
   return (
@@ -151,7 +173,7 @@ export default function Home() {
           )}
 
           {activeTab === "leaderboard" && (
-            <Leaderboard />
+            <Leaderboard data={leaderboardData} />
           )}
 
           {/* HOW IT WORKS MODAL TRIGGER */}
