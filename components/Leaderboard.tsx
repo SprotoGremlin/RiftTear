@@ -3,24 +3,31 @@
 import { useState, useEffect } from "react";
 import { Trophy, Zap, Flame, CheckCircle } from "lucide-react";
 
-const mockLeaders = [
-  { rank: 1, address: "0x8f3...a2b", score: 18420, skin: "Legendary Rift King", color: "#ffcc00", verified: true },
-  { rank: 2, address: "0x4d7...f9c", score: 16280, skin: "Epic Void Runner", color: "#001a66", verified: true },
-  { rank: 3, address: "0x2e9...b1d", score: 15440, skin: "Rare Glitch Phantom", color: "#3c8aff", verified: true },
-  { rank: 4, address: "0x7a1...e8f", score: 14210, skin: "Common Base Blazer", color: "#0052FF", verified: false },
-  { rank: 5, address: "0x9c3...d4e", score: 13890, skin: "Common Base Blazer", color: "#0052FF", verified: false },
-];
+interface LeaderboardProps {
+  data: {
+    rank: number;
+    address: string;
+    score: number;
+    skin: string;
+    color: string;
+    verified: boolean;
+  }[];
+}
 
-export default function Leaderboard() {
-  const [leaders, setLeaders] = useState(mockLeaders);
+export default function Leaderboard({ data }: LeaderboardProps) {
+  const [leaders, setLeaders] = useState(data);
   const [selectedRank, setSelectedRank] = useState<number | null>(null);
   const [glitchTrigger, setGlitchTrigger] = useState(0);
 
-  // Reality-breaking glitch pulse every 8 seconds
+  // Sync live data from parent + glitch pulse
+  useEffect(() => {
+    setLeaders(data);
+  }, [data]);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setGlitchTrigger((prev) => prev + 1);
-      // Shuffle one random entry for live feel
+      // Shuffle one entry for live feel
       setLeaders((prev) => {
         const copy = [...prev];
         const idx = Math.floor(Math.random() * copy.length);
