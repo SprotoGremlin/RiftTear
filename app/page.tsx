@@ -126,6 +126,7 @@ export default function Home() {
             activeMatch={activeMatch}
             onGameEnd={handleGameEnd}
             equippedSkinId={equippedSkinId}
+            onLeaderboardClick={() => setActiveTab("leaderboard")}
           />
         </div>
 
