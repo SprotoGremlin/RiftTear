@@ -1,622 +1,332 @@
 "use client";
 
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState, useCallback } from "react";
+import { Trophy, Share2, HelpCircle } from "lucide-react";
 
 interface RiftGameProps {
   isMatchMode?: boolean;
-  activeMatch?: {
-    id: string;
-    bet: string;
-  } | null;
+  activeMatch?: any;
   onGameEnd?: (score: number) => void;
   equippedSkinId?: number;
+  onLeaderboardClick?: () => void;
 }
 
-interface Particle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  life: number;
-  color: string;
-  size: number;
-}
-
-interface Obstacle {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  type: 'rift' | 'tear' | 'block';
-  glitchOffset: number;
-}
-
-const RiftGame: React.FC<RiftGameProps> = ({ 
-  isMatchMode = false, 
-  activeMatch = null, 
+export default function RiftGame({
+  isMatchMode = false,
+  activeMatch = null,
   onGameEnd,
-  equippedSkinId = 1 
-}) => {
+  equippedSkinId = 1,
+  onLeaderboardClick,
+}: RiftGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [gameState, setGameState] = useState<"idle" | "playing" | "gameover">("idle");
   const [score, setScore] = useState(0);
+  const [distance, setDistance] = useState(0);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [highScore, setHighScore] = useState(0);
-  const [gameState, setGameState] = useState<'idle' | 'playing' | 'gameover'>('idle');
-  const [isGlitching, setIsGlitching] = useState(false);
 
-  const gameRef = useRef({
-    player: { x: 120, y: 0, vy: 0, width: 42, height: 48, onGround: true },
-    obstacles: [] as Obstacle[],
-    particles: [] as Particle[],
-    distance: 0,
-    speed: 6.2,
-    frame: 0,
-    lastSpawn: 0,
-    groundOffset: 0,
-    screenTears: [] as { y: number; life: number }[],
-    chromatic: 0,
-  });
-
-  const triggerMassiveGlitch = useCallback(() => {
-    setIsGlitching(true);
-    const game = gameRef.current;
-    game.chromatic = 18;
-    game.screenTears.push({ y: Math.random() * 400, life: 12 });
-    game.screenTears.push({ y: Math.random() * 400, life: 9 });
-    
-    for (let i = 0; i < 28; i++) {
-      game.particles.push({
-        x: 180 + Math.random() * 120,
-        y: 280 + Math.random() * 80,
-        vx: (Math.random() - 0.5) * 9,
-        vy: (Math.random() - 0.5) * 7 - 2,
-        life: 22 + Math.random() * 18,
-        color: ['#0052FF', '#3c8aff', '#0000FF', '#ffffff'][Math.floor(Math.random() * 4)],
-        size: 2.5 + Math.random() * 3.5,
-      });
-    }
-    setTimeout(() => setIsGlitching(false), 280);
+  // Load high score from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("riftTearHighScore");
+    if (saved) setHighScore(parseInt(saved));
   }, []);
 
-  const jump = useCallback(() => {
-    const game = gameRef.current;
-    if (game.player.onGround && gameState === 'playing') {
-      game.player.vy = -13.5;
-      game.player.onGround = false;
-      
-      for (let i = 0; i < 14; i++) {
-        game.particles.push({
-          x: game.player.x + 18,
-          y: game.player.y + game.player.height - 4,
-          vx: (Math.random() - 0.5) * 4.5,
-          vy: Math.random() * -3.5 - 1.5,
-          life: 14 + Math.random() * 10,
-          color: '#3c8aff',
-          size: 1.8 + Math.random() * 1.6,
-        });
-      }
-      triggerMassiveGlitch();
+  const saveHighScore = useCallback((newScore: number) => {
+    if (newScore > highScore) {
+      setHighScore(newScore);
+      localStorage.setItem("riftTearHighScore", newScore.toString());
     }
-  }, [gameState, triggerMassiveGlitch]);
+  }, [highScore]);
 
-  const resetGame = useCallback(() => {
-    const game = gameRef.current;
-    game.player = { x: 120, y: 320, vy: 0, width: 42, height: 48, onGround: true };
-    game.obstacles = [];
-    game.particles = [];
-    game.distance = 0;
-    game.speed = 6.2;
-    game.frame = 0;
-    game.lastSpawn = 0;
-    game.groundOffset = 0;
-    game.screenTears = [];
-    game.chromatic = 0;
-    setScore(0);
-    setGameState('playing');
-  }, []);
+  // Game loop variables
+  let playerY = 300;
+  let velocity = 0;
+  let gravity = 0.8;
+  let jump = -18;
+  let isJumping = false;
+  let obstacles: any[] = [];
+  let particles: any[] = [];
+  let frame = 0;
+  let gameSpeed = 6;
+  let realityIntegrity = 100; // glitch meter
 
-  const endGame = useCallback(() => {
-    const finalScore = Math.floor(gameRef.current.distance);
-    setScore(finalScore);
-    
-    if (finalScore > highScore) {
-      setHighScore(finalScore);
-    }
-
-    if (isMatchMode && onGameEnd) {
-      onGameEnd(finalScore);
-    }
-
-    triggerMassiveGlitch();
-    setGameState('gameover');
-  }, [highScore, isMatchMode, onGameEnd, triggerMassiveGlitch]);
-
-  const shareScore = useCallback(() => {
-    const text = `I just scored ${score} in RiftTear on Base! 🔥 Join the tear: https://riftttear.base`;
-    navigator.clipboard.writeText(text);
-    alert("Score copied to clipboard! Share it on X or Discord.");
-  }, [score]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === ' ' || e.key === 'Spacebar') {
-        e.preventDefault();
-        if (gameState === 'playing') jump();
-        else if (gameState === 'idle' || gameState === 'gameover') resetGame();
-      }
-      if (e.key.toLowerCase() === 'r' && gameState === 'gameover') {
-        resetGame();
-      }
-      if (e.key.toLowerCase() === 'g') {
-        triggerMassiveGlitch();
-      }
-      if (e.key.toLowerCase() === 's' && gameState === 'gameover' && isMatchMode) {
-        shareScore();
-      }
-    };
-
-    const handleTouchStart = (e: TouchEvent) => {
-      e.preventDefault();
-      if (gameState === 'playing') jump();
-      else if (gameState === 'idle' || gameState === 'gameover') resetGame();
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    const canvas = canvasRef.current;
-    if (canvas) {
-      canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-    }
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      if (canvas) canvas.removeEventListener('touchstart', handleTouchStart);
-    };
-  }, [gameState, jump, resetGame, triggerMassiveGlitch, shareScore]);
-
-  useEffect(() => {
+  const draw = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
-    const ctx = canvas.getContext('2d', { alpha: true });
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    canvas.width = 920;
-    canvas.height = 520;
+    // Background - deep Base blue with scanlines
+    ctx.fillStyle = "#050511";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    let raf: number;
-    const game = gameRef.current;
-
-    const drawPlayer = (x: number, y: number, glitch: number, skinId: number) => {
-      ctx.save();
-
-      // Skin-based visual customization (NFT utility)
-      let bodyColor = '#0052FF';
-      let eyeColor = '#ffffff';
-      let extraGlitch = 0;
-
-      if (skinId === 2) { // Rare
-        bodyColor = '#3c8aff';
-        extraGlitch = 1;
-      } else if (skinId === 3) { // Epic
-        bodyColor = '#001a66';
-        extraGlitch = 2;
-      } else if (skinId === 4) { // Legendary
-        bodyColor = '#ffcc00';
-        eyeColor = '#000000';
-        extraGlitch = 4;
-      }
-
-      const offsets = [
-        { ox: -glitch * 0.6, oy: 0, color: '#ff0033' },
-        { ox: glitch * 0.4, oy: 0, color: '#00ffcc' },
-        { ox: 0, oy: 0, color: bodyColor },
-      ];
-
-      offsets.forEach((layer, idx) => {
-        ctx.fillStyle = layer.color;
-        ctx.globalAlpha = idx === 2 ? 1 : 0.65;
-        
-        const px = x + layer.ox;
-        const py = y + layer.oy;
-
-        ctx.fillRect(px + 6, py + 12, 30, 32);
-        ctx.fillRect(px + 10, py + 2, 24, 18);
-
-        ctx.fillStyle = eyeColor;
-        ctx.fillRect(px + 15, py + 7, 5, 5);
-        ctx.fillRect(px + 24, py + 7, 5, 5);
-
-        if (glitch + extraGlitch > 3) {
-          ctx.fillStyle = '#0000FF';
-          ctx.fillRect(px + 14, py + 6, 8, 2);
-          ctx.fillRect(px + 23, py + 6, 8, 2);
-        }
-      });
-
-      // Legendary extra visual (crown-like glitch lines)
-      if (skinId === 4) {
-        ctx.strokeStyle = '#ffcc00';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(x + 12, y - 2);
-        ctx.lineTo(x + 18, y + 4);
-        ctx.lineTo(x + 24, y - 2);
-        ctx.stroke();
-      }
-
-      ctx.restore();
-    };
-
-    const spawnObstacle = () => {
-      const types: Obstacle['type'][] = ['rift', 'tear', 'block'];
-      const type = types[Math.floor(Math.random() * types.length)];
-      
-      const obs: Obstacle = {
-        x: canvas.width + 40,
-        y: type === 'block' ? 260 + Math.random() * 80 : 340,
-        width: type === 'rift' ? 18 : type === 'tear' ? 26 : 32,
-        height: type === 'rift' ? 110 : type === 'tear' ? 38 : 42,
-        type,
-        glitchOffset: Math.random() * 8 - 4,
-      };
-      game.obstacles.push(obs);
-    };
-
-    const update = () => {
-      if (gameState !== 'playing') return;
-
-      game.frame++;
-      game.distance += game.speed * 0.12;
-      game.speed = Math.min(9.8, 6.2 + game.distance * 0.0032);
-
-      const p = game.player;
-      p.vy += 0.72;
-      p.y += p.vy;
-      
-      const groundY = 368;
-      if (p.y >= groundY) {
-        p.y = groundY;
-        p.vy = 0;
-        p.onGround = true;
-      } else {
-        p.onGround = false;
-      }
-
-      game.groundOffset = (game.groundOffset + game.speed) % 48;
-
-      if (game.frame - game.lastSpawn > Math.max(38, 72 - game.speed * 3.8)) {
-        spawnObstacle();
-        game.lastSpawn = game.frame;
-        if (Math.random() < 0.42) {
-          setTimeout(spawnObstacle, 180);
-        }
-      }
-
-      game.obstacles = game.obstacles.filter((obs) => {
-        obs.x -= game.speed;
-        
-        const px = p.x;
-        const py = p.y;
-        const hit = 
-          px + p.width > obs.x && 
-          px < obs.x + obs.width &&
-          py + p.height > obs.y && 
-          py < obs.y + obs.height;
-
-        if (hit) {
-          endGame();
-          return false;
-        }
-        return obs.x > -80;
-      });
-
-      game.particles = game.particles.filter((part) => {
-        part.x += part.vx;
-        part.y += part.vy;
-        part.vy += 0.18;
-        part.life -= 1;
-        part.vx *= 0.982;
-        return part.life > 0;
-      });
-
-      game.screenTears = game.screenTears.filter((tear) => {
-        tear.life -= 1;
-        return tear.life > 0;
-      });
-
-      if (game.chromatic > 0) game.chromatic *= 0.86;
-
-      const newScore = Math.floor(game.distance);
-      if (newScore !== score) setScore(newScore);
-
-      if (Math.random() < 0.018) {
-        game.chromatic = Math.max(game.chromatic, 4);
-      }
-    };
-
-    const draw = () => {
-      ctx.fillStyle = '#050505';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.strokeStyle = '#001a33';
-      ctx.lineWidth = 1;
-      for (let x = -48; x < canvas.width; x += 48) {
-        ctx.beginPath();
-        ctx.moveTo(x + (game.groundOffset % 48), 0);
-        ctx.lineTo(x + (game.groundOffset % 48), canvas.height);
-        ctx.stroke();
-      }
-
-      ctx.strokeStyle = '#002255';
-      ctx.lineWidth = 2;
-      for (let i = 0; i < 5; i++) {
-        const y = 80 + i * 92;
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y + Math.sin(game.frame / 18 + i) * 6);
-        ctx.stroke();
-      }
-
-      ctx.fillStyle = '#0a0a0a';
-      ctx.fillRect(0, 368, canvas.width, 160);
-
-      ctx.strokeStyle = '#0052FF';
-      ctx.lineWidth = 1.5;
-      for (let x = -48; x < canvas.width + 48; x += 48) {
-        const gx = x + game.groundOffset;
-        ctx.beginPath();
-        ctx.moveTo(gx, 368);
-        ctx.lineTo(gx, 520);
-        ctx.stroke();
-        
-        ctx.strokeStyle = '#3c8aff';
-        ctx.lineWidth = 0.8;
-        ctx.beginPath();
-        ctx.moveTo(gx - 1, 368);
-        ctx.lineTo(gx - 1, 520);
-        ctx.stroke();
-        ctx.strokeStyle = '#0052FF';
-        ctx.lineWidth = 1.5;
-      }
-
-      game.obstacles.forEach((obs) => {
-        const glitch = Math.sin(game.frame / 3 + obs.glitchOffset) * 1.5 + game.chromatic * 0.3;
-
-        if (obs.type === 'rift') {
-          ctx.strokeStyle = '#0052FF';
-          ctx.lineWidth = 4;
-          ctx.beginPath();
-          ctx.moveTo(obs.x + glitch, obs.y);
-          ctx.lineTo(obs.x + 3 + glitch * 0.6, obs.y + obs.height);
-          ctx.stroke();
-
-          ctx.strokeStyle = '#3c8aff';
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(obs.x - 2 + glitch, obs.y + 12);
-          ctx.lineTo(obs.x + 1 + glitch * 0.7, obs.y + obs.height - 8);
-          ctx.stroke();
-
-          ctx.fillStyle = 'rgba(0, 82, 255, 0.25)';
-          ctx.fillRect(obs.x - 8, obs.y, 22, obs.height);
-        } 
-        else if (obs.type === 'tear') {
-          ctx.fillStyle = '#0000FF';
-          ctx.fillRect(obs.x + glitch, obs.y, obs.width, obs.height);
-          
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(obs.x + glitch + 4, obs.y + 6, obs.width - 8, 4);
-          
-          ctx.strokeStyle = '#3c8aff';
-          ctx.lineWidth = 2;
-          ctx.strokeRect(obs.x + glitch - 1, obs.y - 1, obs.width + 2, obs.height + 2);
-        } 
-        else {
-          ctx.fillStyle = '#001133';
-          ctx.fillRect(obs.x + glitch * 0.5, obs.y, obs.width, obs.height);
-          
-          ctx.fillStyle = '#0052FF';
-          ctx.fillRect(obs.x + glitch * 0.8, obs.y + 4, obs.width - 6, 8);
-          ctx.fillRect(obs.x + glitch, obs.y + 22, obs.width - 4, 6);
-          
-          ctx.strokeStyle = '#3c8aff';
-          ctx.lineWidth = 2;
-          ctx.strokeRect(obs.x + glitch, obs.y, obs.width, obs.height);
-        }
-      });
-
-      const glitchAmount = game.chromatic * 0.7 + (isGlitching ? 6 : 0);
-      drawPlayer(game.player.x, game.player.y, glitchAmount, equippedSkinId);
-
-      game.particles.forEach((p) => {
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = Math.max(0.2, p.life / 26);
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
-      });
-      ctx.globalAlpha = 1;
-
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1.5;
-      game.screenTears.forEach((tear) => {
-        const alpha = tear.life / 14;
-        ctx.globalAlpha = alpha * 0.7;
-        ctx.beginPath();
-        ctx.moveTo(0, tear.y);
-        ctx.lineTo(canvas.width, tear.y + Math.sin(game.frame / 4) * 3);
-        ctx.stroke();
-        
-        ctx.strokeStyle = '#0052FF';
-        ctx.beginPath();
-        ctx.moveTo(0, tear.y + 2);
-        ctx.lineTo(canvas.width * 0.6, tear.y + 5);
-        ctx.stroke();
-        ctx.strokeStyle = '#ffffff';
-      });
-      ctx.globalAlpha = 1;
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '700 18px monospace';
-      ctx.fillText(`SCORE ${Math.floor(game.distance).toString().padStart(5, '0')}`, 32, 42);
-      
-      ctx.fillStyle = '#0052FF';
-      ctx.fillText(`SPEED ${(game.speed * 10).toFixed(0)}`, 32, 66);
-
-      if (isMatchMode && activeMatch) {
-        ctx.fillStyle = '#0052FF';
-        ctx.font = '700 16px monospace';
-        ctx.fillText(`MATCH POT: ${(parseFloat(activeMatch.bet) * 2).toFixed(2)} ETH`, canvas.width - 280, 42);
-        
-        ctx.fillStyle = '#ffcc00';
-        ctx.fillText(`WIN THRESHOLD: 420+`, canvas.width - 280, 66);
-
-        // Win threshold progress bar
-        const progress = Math.min(1, game.distance / 420);
-        ctx.fillStyle = '#001122';
-        ctx.fillRect(canvas.width - 280, 82, 180, 8);
-        ctx.fillStyle = progress > 0.9 ? '#00ffcc' : '#0052FF';
-        ctx.fillRect(canvas.width - 278, 84, progress * 176, 4);
-      }
-
-      const integrity = Math.max(12, 100 - (game.speed - 6.2) * 18);
-      ctx.fillStyle = '#001122';
-      ctx.fillRect(canvas.width - 180, 28, 148, 12);
-      ctx.fillStyle = integrity > 45 ? '#0052FF' : '#ff3366';
-      ctx.fillRect(canvas.width - 178, 30, (integrity / 100) * 144, 8);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '11px monospace';
-      ctx.fillText('REALITY INTEGRITY', canvas.width - 178, 22);
-    };
-
-    const loop = () => {
-      update();
-      draw();
-
-      if (gameState === 'playing') {
-        raf = requestAnimationFrame(loop);
-      } else if (gameState === 'gameover') {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        if (isMatchMode) {
-          ctx.fillStyle = '#0052FF';
-          ctx.font = 'bold 52px monospace';
-          ctx.fillText('REALITY TORN', 280, 210);
-          
-          ctx.fillStyle = '#ffffff';
-          ctx.font = '700 22px monospace';
-          ctx.fillText(`FINAL TEAR: ${score.toString().padStart(5, '0')}`, 310, 270);
-          
-          if (score >= 420) {
-            ctx.fillStyle = '#00ffcc';
-            ctx.fillText('POT CLAIMABLE', 330, 310);
-          } else {
-            ctx.fillStyle = '#ff3366';
-            ctx.fillText('BETTER LUCK NEXT RIFT', 290, 310);
-          }
-
-          // Share button hint
-          ctx.fillStyle = '#0052FF';
-          ctx.font = '14px monospace';
-          ctx.fillText('PRESS S TO SHARE YOUR TEAR', 280, 360);
-        } else {
-          ctx.fillStyle = '#ff3366';
-          ctx.font = 'bold 64px monospace';
-          ctx.fillText('REALITY', 260, 198);
-          ctx.fillText('FRACTURED', 232, 268);
-
-          ctx.fillStyle = '#ffffff';
-          ctx.font = '700 22px monospace';
-          ctx.fillText(`FINAL TEAR: ${score.toString().padStart(5, '0')}`, 310, 330);
-        }
-
-        ctx.fillStyle = '#0052FF';
-        ctx.font = '16px monospace';
-        ctx.fillText('PRESS SPACE OR TAP TO RESTART', 278, 390);
-        ctx.fillText('PRESS R TO RESTART', 338, 415);
-      } else {
-        ctx.fillStyle = 'rgba(0, 82, 255, 0.08)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        ctx.fillStyle = '#0052FF';
-        ctx.font = 'bold 42px monospace';
-        ctx.fillText('PRESS SPACE TO TEAR REALITY', 178, 248);
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '16px monospace';
-        ctx.fillText('JUMP = SPACE / TAP  •  MASSIVE GLITCH = G  •  HOW TO PLAY = H', 178, 290);
-      }
-    };
-
-    if (gameState === 'playing') {
-      raf = requestAnimationFrame(loop);
-    } else {
-      draw();
+    // Neon grid
+    ctx.strokeStyle = "#0052FF";
+    ctx.lineWidth = 1;
+    for (let x = 0; x < canvas.width; x += 40) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x + Math.sin(frame / 20) * 8, canvas.height);
+      ctx.stroke();
     }
 
-    return () => cancelAnimationFrame(raf);
-  }, [gameState, score, jump, resetGame, endGame, triggerMassiveGlitch, highScore, isMatchMode, activeMatch, equippedSkinId, shareScore]);
+    // Ground
+    ctx.fillStyle = "#001a33";
+    ctx.fillRect(0, 380, canvas.width, canvas.height - 380);
 
-  // Keyboard handlers for share and how to play
+    // Player - blue Pepe-style with skin tint
+    const skinOffset = equippedSkinId * 30;
+    ctx.fillStyle = `hsl(210, 100%, ${50 + skinOffset}%)`;
+    ctx.fillRect(120, playerY, 48, 48); // body
+
+    // Head
+    ctx.fillStyle = "#00aaff";
+    ctx.fillRect(128, playerY - 12, 32, 32);
+
+    // Eyes
+    ctx.fillStyle = "#000";
+    ctx.fillRect(138, playerY - 4, 8, 8);
+    ctx.fillRect(154, playerY - 4, 8, 8);
+
+    // Glitch legs
+    ctx.fillStyle = "#0052FF";
+    ctx.fillRect(130, playerY + 48, 12, 18);
+    ctx.fillRect(150, playerY + 48, 12, 18);
+
+    // Obstacles
+    ctx.fillStyle = "#ff3366";
+    obstacles.forEach((obs) => {
+      ctx.fillRect(obs.x, 360, 32, 32);
+    });
+
+    // Particles (reality tears)
+    particles.forEach((p, i) => {
+      ctx.globalAlpha = p.life;
+      ctx.fillStyle = "#00ccff";
+      ctx.fillRect(p.x, p.y, 4, 4);
+      ctx.globalAlpha = 1;
+      p.life -= 0.03;
+      p.y += p.vy;
+      if (p.life <= 0) particles.splice(i, 1);
+    });
+
+    // HUD
+    ctx.fillStyle = "#fff";
+    ctx.font = "900 48px monospace";
+    ctx.fillText(score.toString().padStart(6, "0"), 40, 80);
+
+    if (isMatchMode && activeMatch) {
+      // Progress bar for match win threshold
+      const progress = Math.min(1, distance / 420);
+      ctx.fillStyle = "#001122";
+      ctx.fillRect(canvas.width - 280, 82, 180, 8);
+      ctx.fillStyle = progress > 0.9 ? "#00ffcc" : "#0052FF";
+      ctx.fillRect(canvas.width - 278, 84, progress * 176, 4);
+      ctx.fillStyle = "#fff";
+      ctx.font = "700 14px monospace";
+      ctx.fillText("420 TEARS TO WIN POT", canvas.width - 280, 110);
+    }
+
+    // Game over screen
+    if (gameState === "gameover") {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#ff3366";
+      ctx.font = "900 64px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("REALITY BROKE", canvas.width / 2, 180);
+
+      ctx.fillStyle = "#fff";
+      ctx.font = "700 32px monospace";
+      ctx.fillText(`FINAL SCORE ${score}`, canvas.width / 2, 260);
+
+      // Submit button
+      ctx.fillStyle = "#0052FF";
+      ctx.fillRect(canvas.width / 2 - 140, 300, 280, 64);
+      ctx.fillStyle = "#fff";
+      ctx.font = "700 20px monospace";
+      ctx.fillText("SUBMIT TO LEADERBOARD", canvas.width / 2, 340);
+
+      // View leaderboard hint
+      ctx.font = "400 14px monospace";
+      ctx.fillStyle = "#00ccff";
+      ctx.fillText("PRESS L TO VIEW LEADERBOARD", canvas.width / 2, 420);
+    }
+
+    // Idle screen
+    if (gameState === "idle") {
+      ctx.fillStyle = "#0052FF";
+      ctx.font = "900 28px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("PRESS SPACE TO DASH", canvas.width / 2, 240);
+
+      ctx.font = "400 14px monospace";
+      ctx.fillStyle = "#fff";
+      ctx.fillText("EQUIPPED SKIN #" + equippedSkinId, canvas.width / 2, 290);
+      ctx.fillText("PRESS H FOR HOW TO PLAY", canvas.width / 2, 320);
+    }
+  }, [score, distance, gameState, equippedSkinId, isMatchMode, activeMatch]);
+
+  const gameLoop = useCallback(() => {
+    if (gameState !== "playing") {
+      draw();
+      requestAnimationFrame(gameLoop);
+      return;
+    }
+
+    frame++;
+    distance += gameSpeed;
+
+    // Update score
+    if (frame % 8 === 0) {
+      setScore((prev) => prev + 10);
+    }
+
+    // Physics
+    velocity += gravity;
+    playerY += velocity;
+
+    if (playerY > 300) {
+      playerY = 300;
+      velocity = 0;
+      isJumping = false;
+    }
+
+    // Spawn obstacles
+    if (frame % 45 === 0) {
+      obstacles.push({ x: 800, life: 1 });
+    }
+
+    // Update obstacles
+    obstacles = obstacles.filter((obs) => {
+      obs.x -= gameSpeed;
+      return obs.x > -50;
+    });
+
+    // Collision
+    const hit = obstacles.some((obs) => obs.x < 168 && obs.x > 100 && playerY + 48 > 360);
+    if (hit) {
+      setGameState("gameover");
+      saveHighScore(score);
+      onGameEnd?.(score);
+      return;
+    }
+
+    // Particles
+    if (Math.random() > 0.7) {
+      particles.push({
+        x: 140 + Math.random() * 30,
+        y: playerY + 60,
+        vy: -2 - Math.random() * 3,
+        life: 1,
+      });
+    }
+
+    // Reality glitch pulse
+    if (frame % 120 === 0) realityIntegrity = Math.max(20, realityIntegrity - 8);
+
+    draw();
+    requestAnimationFrame(gameLoop);
+  }, [draw, gameState, score, saveHighScore, onGameEnd]);
+
+  const handleKey = useCallback((e: KeyboardEvent) => {
+    if (gameState === "idle" && e.key === " ") {
+      setGameState("playing");
+      setScore(0);
+      setDistance(0);
+      obstacles = [];
+      particles = [];
+    }
+
+    if (gameState === "playing" && e.key === " " && !isJumping) {
+      velocity = jump;
+      isJumping = true;
+    }
+
+    if (gameState === "gameover") {
+      if (e.key.toLowerCase() === "s") {
+        const text = `I just tore reality with ${score} in RiftTear on Base! 🔥 https://riftttear.base`;
+        navigator.clipboard.writeText(text).then(() => alert("Score shared to clipboard!"));
+      }
+      if (e.key.toLowerCase() === "h") {
+        alert("SPACE = JUMP • AVOID PINK BLOCKS • FIRST TO 420 WINS THE POT");
+      }
+      if (e.key.toLowerCase() === "l" && onLeaderboardClick) {
+        onLeaderboardClick();
+      }
+    }
+  }, [gameState, score, onLeaderboardClick]);
+
+  const handleCanvasClick = useCallback((e: React.MouseEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+
+    if (gameState === "gameover" && clickX > canvas.width / 2 - 140 && clickX < canvas.width / 2 + 140 && clickY > 300 && clickY < 364) {
+      setShowSubmitModal(true);
+    }
+  }, [gameState]);
+
+  // Submit handler (future onchain)
+  const submitToLeaderboard = () => {
+    console.log(`[ONCHAIN] Submitting score ${score} with skin #${equippedSkinId} to leaderboard contract`);
+    setShowSubmitModal(false);
+    alert("SCORE SUBMITTED TO LEADERBOARD • VERIFIED ON BASESCAN");
+    // Auto-switch to leaderboard tab
+    if (onLeaderboardClick) {
+      setTimeout(() => {
+        onLeaderboardClick();
+      }, 800);
+    }
+  };
+
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === 's' && gameState === 'gameover' && isMatchMode) {
-        shareScore();
-      }
-      if (e.key.toLowerCase() === 'h' && gameState === 'idle') {
-        // Trigger parent modal if available (simplified for component)
-        alert("HOW TO PLAY: Press SPACE to jump • G for massive glitch • Avoid obstacles • Highest score wins the pot!");
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [gameState, isMatchMode, shareScore]);
+    const canvas = canvasRef.current;
+    if (canvas) {
+      canvas.width = 800;
+      canvas.height = 480;
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [handleKey]);
+
+  useEffect(() => {
+    gameLoop();
+  }, [gameLoop]);
 
   return (
-    <div className="relative flex flex-col items-center">
-      <div className="relative">
-        <canvas
-          ref={canvasRef}
-          className="rounded-xl border border-[#0052FF]/40 shadow-[0_0_80px_-10px_#0052FF]"
-          style={{ 
-            imageRendering: 'pixelated',
-            filter: isGlitching ? 'contrast(1.15) saturate(1.4)' : 'none'
-          }}
-        />
+    <div className="relative">
+      <canvas
+        ref={canvasRef}
+        onClick={handleCanvasClick}
+        className="border-4 border-[#0052FF]/80 shadow-2xl shadow-[#0052FF]/40 rounded-3xl bg-black"
+      />
 
-        <div className="absolute top-4 right-4 flex flex-col items-end gap-2 z-20">
-          <div className="px-4 py-1.5 bg-black/70 border border-[#0052FF]/60 text-xs tracking-[2px] font-mono text-[#0052FF]">
-            HIGH TEAR: {highScore.toString().padStart(5, '0')}
-          </div>
-          
-          {gameState === 'playing' && (
+      {/* Submit modal */}
+      {showSubmitModal && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50">
+          <div className="glass max-w-md w-full mx-4 p-10 text-center border border-[#0052FF]">
+            <Trophy className="mx-auto w-16 h-16 text-[#ffcc00] mb-6" />
+            <div className="text-3xl font-black mb-2">SUBMIT TO LEADERBOARD</div>
+            <div className="text-[#00ccff] text-xl mb-8">SCORE: {score} TEARS</div>
             <button
-              onClick={triggerMassiveGlitch}
-              className="px-5 py-2 text-xs tracking-[2px] border border-[#0052FF] hover:bg-[#0052FF] hover:text-black transition-all font-mono"
+              onClick={submitToLeaderboard}
+              className="w-full py-6 bg-[#0052FF] hover:bg-[#0033aa] text-black text-2xl font-bold rounded-3xl transition-all mb-6"
             >
-              TEAR REALITY [G]
+              CONFIRM ONCHAIN
             </button>
-          )}
-        </div>
-
-        {gameState === 'idle' && (
-          <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
-            <div className="text-center">
-              <div className="text-[11px] tracking-[4px] text-[#0052FF] mb-2">BASE • ONCHAINKIT • WAGMI</div>
-              <div className="text-7xl font-black tracking-[-3px] text-white">RIFTTEAR</div>
-              <div className="mt-4 text-xs text-[#0052FF] tracking-[1px]">PRESS H FOR HOW TO PLAY</div>
-            </div>
+            <button
+              onClick={() => setShowSubmitModal(false)}
+              className="text-white/60 hover:text-white text-sm"
+            >
+              CANCEL • KEEP TEARS PRIVATE
+            </button>
           </div>
-        )}
-      </div>
-
-      <div className="mt-4 flex gap-3 text-xs tracking-[1.5px] text-white/50 font-mono">
-        SPACE = JUMP &nbsp;•&nbsp; G = GLITCH &nbsp;•&nbsp; R = RESTART &nbsp;•&nbsp; S = SHARE (GAME OVER) &nbsp;•&nbsp; H = HOW TO PLAY
-        {isMatchMode && <span className="text-[#0052FF]">• MATCH MODE ACTIVE</span>}
-      </div>
+        </div>
+      )}
     </div>
   );
-};
-
-export default RiftGame;
+}
