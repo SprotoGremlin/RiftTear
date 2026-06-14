@@ -6,6 +6,7 @@ import SkinGallery from "@/components/SkinGallery";
 import MatchCreator from "@/components/MatchCreator";
 import ClaimWinnings from "@/components/ClaimWinnings";
 import Leaderboard from "@/components/Leaderboard";
+import HowItWorksModal from "@/components/HowItWorksModal";
 import { useState } from "react";
 import Link from "next/link";
 
@@ -18,6 +19,7 @@ export default function Home() {
     { id: "match-2", bet: "0.12", players: 2, pot: "0.24" },
   ]);
   const [activeMatch, setActiveMatch] = useState<any>(null);
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
 
   // Live leaderboard state (mock onchain data)
   const [leaderboardData, setLeaderboardData] = useState([
@@ -53,7 +55,6 @@ export default function Home() {
         verified: true,
       };
       const updated = [newEntry, ...prev].slice(0, 5);
-      // Re-rank
       return updated.map((entry, i) => ({ ...entry, rank: i + 1 }));
     });
   };
@@ -85,6 +86,12 @@ export default function Home() {
             className={`px-6 py-2 rounded-3xl transition-all ${activeTab === "leaderboard" ? "bg-[#0052FF] text-black" : "hover:bg-white/10"}`}
           >
             LEADERBOARD
+          </button>
+          <button
+            onClick={() => setShowHowItWorks(true)}
+            className="px-6 py-2 flex items-center gap-2 hover:bg-white/10 rounded-3xl"
+          >
+            <HelpCircle className="w-4 h-4" /> HOW IT WORKS
           </button>
         </div>
 
@@ -177,32 +184,21 @@ export default function Home() {
             <Leaderboard data={leaderboardData} />
           )}
 
-          {/* HOW IT WORKS MODAL TRIGGER */}
-          <div className="text-center text-xs text-white/40">
-            <button
-              onClick={() => {
-                const modal = document.createElement("div");
-                modal.innerHTML = `
-                  <div class="fixed inset-0 bg-black/90 flex items-center justify-center z-[9999]">
-                    <div class="glass max-w-lg mx-auto p-10 text-center">
-                      <div class="text-4xl mb-6">HOW RIFTTEAR WORKS</div>
-                      <div class="space-y-6 text-left text-sm">
-                        <div>1. Escrow ETH in a match</div>
-                        <div>2. Play endless runner • first to 420 tears wins</div>
-                        <div>3. Claim pot onchain via Basescan</div>
-                      </div>
-                      <button onclick="this.closest('.fixed').remove()" class="mt-10 px-8 py-3 bg-white text-black rounded-3xl">CLOSE REALITY</button>
-                    </div>
-                  </div>
-                `;
-                document.body.appendChild(modal);
-              }}
-              className="underline hover:text-[#0052FF]"
-            >
-              how it works →
-            </button>
-          </div>
+          {/* Floating How It Works Button */}
+          <button
+            onClick={() => setShowHowItWorks(true)}
+            className="mx-auto flex items-center gap-2 text-sm text-white/60 hover:text-white"
+          >
+            📖 FULL GAMEPLAY + ONCHAIN GUIDE
+          </button>
         </div>
+      </div>
+
+      <HowItWorksModal isOpen={showHowItWorks} onClose={() => setShowHowItWorks(false)} />
+
+      {/* Progress footer */}
+      <div className="fixed bottom-4 right-8 text-xs font-mono text-white/30">
+        Commit 40/100 • RiftTear on Base • Production grade
       </div>
     </div>
   );
