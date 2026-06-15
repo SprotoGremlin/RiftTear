@@ -9,6 +9,7 @@ interface RiftGameProps {
   onGameEnd?: (score: number) => void;
   equippedSkinId?: number;
   onLeaderboardClick?: () => void;
+  setShowHowItWorks?: (open: boolean) => void;
 }
 
 export default function RiftGame({
@@ -17,6 +18,7 @@ export default function RiftGame({
   onGameEnd,
   equippedSkinId = 1,
   onLeaderboardClick,
+  setShowHowItWorks,
 }: RiftGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gameState, setGameState] = useState<"idle" | "playing" | "gameover">("idle");
@@ -25,7 +27,6 @@ export default function RiftGame({
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [highScore, setHighScore] = useState(0);
 
-  // Load high score from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("riftTearHighScore");
     if (saved) setHighScore(parseInt(saved));
@@ -38,7 +39,6 @@ export default function RiftGame({
     }
   }, [highScore]);
 
-  // Game loop variables
   let playerY = 300;
   let velocity = 0;
   let gravity = 0.8;
@@ -48,7 +48,7 @@ export default function RiftGame({
   let particles: any[] = [];
   let frame = 0;
   let gameSpeed = 6;
-  let realityIntegrity = 100; // glitch meter
+  let realityIntegrity = 100;
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -56,11 +56,9 @@ export default function RiftGame({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Background - deep Base blue with scanlines
     ctx.fillStyle = "#050511";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Neon grid
     ctx.strokeStyle = "#0052FF";
     ctx.lineWidth = 1;
     for (let x = 0; x < canvas.width; x += 40) {
@@ -70,36 +68,29 @@ export default function RiftGame({
       ctx.stroke();
     }
 
-    // Ground
     ctx.fillStyle = "#001a33";
     ctx.fillRect(0, 380, canvas.width, canvas.height - 380);
 
-    // Player - blue Pepe-style with skin tint
     const skinOffset = equippedSkinId * 30;
     ctx.fillStyle = `hsl(210, 100%, ${50 + skinOffset}%)`;
-    ctx.fillRect(120, playerY, 48, 48); // body
+    ctx.fillRect(120, playerY, 48, 48);
 
-    // Head
     ctx.fillStyle = "#00aaff";
     ctx.fillRect(128, playerY - 12, 32, 32);
 
-    // Eyes
     ctx.fillStyle = "#000";
     ctx.fillRect(138, playerY - 4, 8, 8);
     ctx.fillRect(154, playerY - 4, 8, 8);
 
-    // Glitch legs
     ctx.fillStyle = "#0052FF";
     ctx.fillRect(130, playerY + 48, 12, 18);
     ctx.fillRect(150, playerY + 48, 12, 18);
 
-    // Obstacles
     ctx.fillStyle = "#ff3366";
     obstacles.forEach((obs) => {
       ctx.fillRect(obs.x, 360, 32, 32);
     });
 
-    // Particles (reality tears)
     particles.forEach((p, i) => {
       ctx.globalAlpha = p.life;
       ctx.fillStyle = "#00ccff";
@@ -110,13 +101,11 @@ export default function RiftGame({
       if (p.life <= 0) particles.splice(i, 1);
     });
 
-    // HUD
     ctx.fillStyle = "#fff";
     ctx.font = "900 48px monospace";
     ctx.fillText(score.toString().padStart(6, "0"), 40, 80);
 
     if (isMatchMode && activeMatch) {
-      // Progress bar for match win threshold
       const progress = Math.min(1, distance / 420);
       ctx.fillStyle = "#001122";
       ctx.fillRect(canvas.width - 280, 82, 180, 8);
@@ -127,7 +116,6 @@ export default function RiftGame({
       ctx.fillText("420 TEARS TO WIN POT", canvas.width - 280, 110);
     }
 
-    // Game over screen
     if (gameState === "gameover") {
       ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -141,20 +129,17 @@ export default function RiftGame({
       ctx.font = "700 32px monospace";
       ctx.fillText(`FINAL SCORE ${score}`, canvas.width / 2, 260);
 
-      // Submit button
       ctx.fillStyle = "#0052FF";
       ctx.fillRect(canvas.width / 2 - 140, 300, 280, 64);
       ctx.fillStyle = "#fff";
       ctx.font = "700 20px monospace";
       ctx.fillText("SUBMIT TO LEADERBOARD", canvas.width / 2, 340);
 
-      // View leaderboard hint
       ctx.font = "400 14px monospace";
       ctx.fillStyle = "#00ccff";
-      ctx.fillText("PRESS L TO VIEW LEADERBOARD", canvas.width / 2, 420);
+      ctx.fillText("PRESS L → LEADERBOARD • H → HOW IT WORKS", canvas.width / 2, 420);
     }
 
-    // Idle screen
     if (gameState === "idle") {
       ctx.fillStyle = "#0052FF";
       ctx.font = "900 28px monospace";
@@ -164,7 +149,7 @@ export default function RiftGame({
       ctx.font = "400 14px monospace";
       ctx.fillStyle = "#fff";
       ctx.fillText("EQUIPPED SKIN #" + equippedSkinId, canvas.width / 2, 290);
-      ctx.fillText("PRESS H FOR HOW TO PLAY", canvas.width / 2, 320);
+      ctx.fillText("PRESS H FOR HOW IT WORKS", canvas.width / 2, 320);
     }
   }, [score, distance, gameState, equippedSkinId, isMatchMode, activeMatch]);
 
@@ -178,12 +163,8 @@ export default function RiftGame({
     frame++;
     distance += gameSpeed;
 
-    // Update score
-    if (frame % 8 === 0) {
-      setScore((prev) => prev + 10);
-    }
+    if (frame % 8 === 0) setScore((prev) => prev + 10);
 
-    // Physics
     velocity += gravity;
     playerY += velocity;
 
@@ -193,18 +174,13 @@ export default function RiftGame({
       isJumping = false;
     }
 
-    // Spawn obstacles
-    if (frame % 45 === 0) {
-      obstacles.push({ x: 800, life: 1 });
-    }
+    if (frame % 45 === 0) obstacles.push({ x: 800, life: 1 });
 
-    // Update obstacles
     obstacles = obstacles.filter((obs) => {
       obs.x -= gameSpeed;
       return obs.x > -50;
     });
 
-    // Collision
     const hit = obstacles.some((obs) => obs.x < 168 && obs.x > 100 && playerY + 48 > 360);
     if (hit) {
       setGameState("gameover");
@@ -213,7 +189,6 @@ export default function RiftGame({
       return;
     }
 
-    // Particles
     if (Math.random() > 0.7) {
       particles.push({
         x: 140 + Math.random() * 30,
@@ -223,7 +198,6 @@ export default function RiftGame({
       });
     }
 
-    // Reality glitch pulse
     if (frame % 120 === 0) realityIntegrity = Math.max(20, realityIntegrity - 8);
 
     draw();
@@ -247,16 +221,16 @@ export default function RiftGame({
     if (gameState === "gameover") {
       if (e.key.toLowerCase() === "s") {
         const text = `I just tore reality with ${score} in RiftTear on Base! 🔥 https://riftttear.base`;
-        navigator.clipboard.writeText(text).then(() => alert("Score shared to clipboard!"));
+        navigator.clipboard.writeText(text).then(() => alert("Score shared!"));
       }
-      if (e.key.toLowerCase() === "h") {
-        alert("SPACE = JUMP • AVOID PINK BLOCKS • FIRST TO 420 WINS THE POT");
+      if (e.key.toLowerCase() === "h" && setShowHowItWorks) {
+        setShowHowItWorks(true);
       }
       if (e.key.toLowerCase() === "l" && onLeaderboardClick) {
         onLeaderboardClick();
       }
     }
-  }, [gameState, score, onLeaderboardClick]);
+  }, [gameState, score, setShowHowItWorks, onLeaderboardClick]);
 
   const handleCanvasClick = useCallback((e: React.MouseEvent) => {
     const canvas = canvasRef.current;
@@ -270,16 +244,12 @@ export default function RiftGame({
     }
   }, [gameState]);
 
-  // Submit handler (future onchain)
   const submitToLeaderboard = () => {
-    console.log(`[ONCHAIN] Submitting score ${score} with skin #${equippedSkinId} to leaderboard contract`);
+    console.log(`[ONCHAIN] Submitting score ${score} with skin #${equippedSkinId}`);
     setShowSubmitModal(false);
-    alert("SCORE SUBMITTED TO LEADERBOARD • VERIFIED ON BASESCAN");
-    // Auto-switch to leaderboard tab
+    alert("SCORE SUBMITTED • VERIFIED ON BASESCAN");
     if (onLeaderboardClick) {
-      setTimeout(() => {
-        onLeaderboardClick();
-      }, 800);
+      setTimeout(onLeaderboardClick, 800);
     }
   };
 
@@ -305,7 +275,6 @@ export default function RiftGame({
         className="border-4 border-[#0052FF]/80 shadow-2xl shadow-[#0052FF]/40 rounded-3xl bg-black"
       />
 
-      {/* Submit modal */}
       {showSubmitModal && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50">
           <div className="glass max-w-md w-full mx-4 p-10 text-center border border-[#0052FF]">
@@ -318,11 +287,8 @@ export default function RiftGame({
             >
               CONFIRM ONCHAIN
             </button>
-            <button
-              onClick={() => setShowSubmitModal(false)}
-              className="text-white/60 hover:text-white text-sm"
-            >
-              CANCEL • KEEP TEARS PRIVATE
+            <button onClick={() => setShowSubmitModal(false)} className="text-white/60 hover:text-white text-sm">
+              CANCEL
             </button>
           </div>
         </div>
