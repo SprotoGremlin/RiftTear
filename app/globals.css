@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --base-blue: #0052FF;
+}
+
+.glass {
+  background: rgba(5, 5, 17, 0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 82, 255, 0.3);
+}
+
+body {
+  font-feature-settings: "kern" 1, "tnum" 1;
+}
+
+@keyframes glitch {
+  0% { transform: translate(0); }
+  20% { transform: translate(-3px, 2px); }
+  40% { transform: translate(-2px, -3px); }
+  60% { transform: translate(3px, 2px); }
+  80% { transform: translate(2px, -2px); }
+  100% { transform: translate(0); }
+}
+
+.neon-text {
+  text-shadow: 0 0 10px #0052FF, 0 0 20px #0052FF, 0 0 40px #00aaff;
+}
+
+button {
+  transition: all 0.1s ease;
+}
+
+button:active {
+  transform: scale(0.96);
+}
