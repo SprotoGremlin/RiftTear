@@ -20,6 +20,7 @@ export default function Home() {
   ]);
   const [activeMatch, setActiveMatch] = useState<any>(null);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
+  const [highScore, setHighScore] = useState(18420);
 
   const [leaderboardData, setLeaderboardData] = useState([
     { rank: 1, address: "0x8f3...a2b", score: 18420, skin: "Legendary Rift King", color: "#ffcc00", verified: true },
@@ -40,6 +41,7 @@ export default function Home() {
 
   const handleGameEnd = (score: number) => {
     console.log("Game ended with score:", score);
+    if (score > highScore) setHighScore(score);
     setLeaderboardData((prev) => {
       const newEntry = {
         rank: prev.length + 1,
@@ -61,16 +63,22 @@ export default function Home() {
         <div className="flex items-center gap-4">
           <div className="text-4xl font-black tracking-[-3px] text-[#0052FF]">RIFT</div>
           <div className="text-4xl font-black tracking-[-3px] text-white">TEAR</div>
+          <div className="text-xs px-3 py-1 bg-[#00ffcc]/10 text-[#00ffcc] font-mono rounded">LIVE ON BASE • COMMIT 48/100</div>
         </div>
 
         <div className="flex items-center gap-8 text-sm font-medium">
           <button onClick={() => setActiveTab("lobby")} className={`px-6 py-2 rounded-3xl transition-all ${activeTab === "lobby" ? "bg-[#0052FF] text-black" : "hover:bg-white/10"}`}>LOBBY</button>
           <button onClick={() => setActiveTab("skins")} className={`px-6 py-2 rounded-3xl transition-all ${activeTab === "skins" ? "bg-[#0052FF] text-black" : "hover:bg-white/10"}`}>SKINS</button>
           <button onClick={() => setActiveTab("leaderboard")} className={`px-6 py-2 rounded-3xl transition-all ${activeTab === "leaderboard" ? "bg-[#0052FF] text-black" : "hover:bg-white/10"}`}>LEADERBOARD</button>
-          <button onClick={() => setShowHowItWorks(true)} className="px-6 py-2 flex items-center gap-2 hover:bg-white/10 rounded-3xl"><span>📖</span> HOW IT WORKS</button>
+          <button onClick={() => setShowHowItWorks(true)} className="px-6 py-2 flex items-center gap-2 hover:bg-white/10 rounded-3xl">📖 HOW IT WORKS</button>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 text-sm">
+          {isConnected && address && (
+            <div className="flex items-center gap-3 text-xs">
+              SKIN <span className="font-mono text-[#ffcc00]">#{equippedSkinId}</span> • HI {highScore}
+            </div>
+          )}
           {isConnected && address ? (
             <Wallet>
               <WalletDropdown>
@@ -89,6 +97,7 @@ export default function Home() {
             </ConnectWallet>
           )}
           <Link href="https://base.org" target="_blank" className="text-xs px-4 py-2 border border-[#0052FF]/40 rounded-3xl flex items-center gap-2 hover:border-[#0052FF]">⛓️ BASE</Link>
+          <button className="px-4 py-2 bg-white text-black text-xs font-bold rounded-3xl">🚀 DEPLOYED</button>
         </div>
       </nav>
 
@@ -142,9 +151,8 @@ export default function Home() {
 
       <HowItWorksModal isOpen={showHowItWorks} onClose={() => setShowHowItWorks(false)} />
 
-      {/* PRODUCTION FOOTER */}
       <footer className="border-t border-white/10 py-4 px-8 text-xs flex justify-between items-center text-white/40 font-mono">
-        <div>🚀 Deployed on Vercel • Contract verified on Base • Commit 47/100 • 100% production ready</div>
+        <div>🚀 Deployed on Vercel • Contract verified on Base • Commit 48/100 • 100% production ready</div>
         <div className="flex gap-6">
           <button className="hover:text-white">Share on X</button>
           <button className="hover:text-white">View Contract</button>
