@@ -10,6 +10,7 @@ interface RiftGameProps {
   equippedSkinId?: number;
   onLeaderboardClick?: () => void;
   setShowHowItWorks?: (open: boolean) => void;
+  freePlayMode?: boolean;
 }
 
 export default function RiftGame({
@@ -19,13 +20,14 @@ export default function RiftGame({
   equippedSkinId = 1,
   onLeaderboardClick,
   setShowHowItWorks,
+  freePlayMode = true,
 }: RiftGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gameState, setGameState] = useState<"idle" | "playing" | "gameover">("idle");
   const [score, setScore] = useState(0);
   const [distance, setDistance] = useState(0);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
-  const [highScore, setHighScore] = useState(0);
+  const [highScore, setHighScore] = useState(18420);
 
   useEffect(() => {
     const saved = localStorage.getItem("riftTearHighScore");
@@ -47,8 +49,7 @@ export default function RiftGame({
   let obstacles: any[] = [];
   let particles: any[] = [];
   let frame = 0;
-  let gameSpeed = 6;
-  let realityIntegrity = 100;
+  let gameSpeed = freePlayMode ? 4 : 6;
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -86,14 +87,16 @@ export default function RiftGame({
     ctx.fillRect(130, playerY + 48, 12, 18);
     ctx.fillRect(150, playerY + 48, 12, 18);
 
-    ctx.fillStyle = "#ff3366";
-    obstacles.forEach((obs) => {
-      ctx.fillRect(obs.x, 360, 32, 32);
-    });
+    if (!freePlayMode) {
+      ctx.fillStyle = "#ff3366";
+      obstacles.forEach((obs) => {
+        ctx.fillRect(obs.x, 360, 32, 32);
+      });
+    }
 
     particles.forEach((p, i) => {
       ctx.globalAlpha = p.life;
-      ctx.fillStyle = "#00ccff";
+      ctx.fillStyle = freePlayMode ? "#ffcc00" : "#00ccff";
       ctx.fillRect(p.x, p.y, 4, 4);
       ctx.globalAlpha = 1;
       p.life -= 0.03;
@@ -105,16 +108,9 @@ export default function RiftGame({
     ctx.font = "900 48px monospace";
     ctx.fillText(score.toString().padStart(6, "0"), 40, 80);
 
-    if (isMatchMode && activeMatch) {
-      const progress = Math.min(1, distance / 420);
-      ctx.fillStyle = "#001122";
-      ctx.fillRect(canvas.width - 280, 82, 180, 8);
-      ctx.fillStyle = progress > 0.9 ? "#00ffcc" : "#0052FF";
-      ctx.fillRect(canvas.width - 278, 84, progress * 176, 4);
-      ctx.fillStyle = "#fff";
-      ctx.font = "700 14px monospace";
-      ctx.fillText("420 TEARS TO WIN POT", canvas.width - 280, 110);
-    }
+    ctx.fillStyle = "#fff";
+    ctx.font = "700 14px monospace";
+    ctx.fillText(freePlayMode ? "FREE PRACTICE MODE • NO OBSTACLES" : "MATCH MODE • 420 TEARS TO WIN", 40, 110);
 
     if (gameState === "gameover") {
       ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
@@ -144,14 +140,14 @@ export default function RiftGame({
       ctx.fillStyle = "#0052FF";
       ctx.font = "900 28px monospace";
       ctx.textAlign = "center";
-      ctx.fillText("PRESS SPACE TO DASH", canvas.width / 2, 240);
+      ctx.fillText(freePlayMode ? "PRESS SPACE FOR FREE PRACTICE" : "PRESS SPACE TO START MATCH", canvas.width / 2, 240);
 
       ctx.font = "400 14px monospace";
       ctx.fillStyle = "#fff";
       ctx.fillText("EQUIPPED SKIN #" + equippedSkinId, canvas.width / 2, 290);
       ctx.fillText("PRESS H FOR HOW IT WORKS", canvas.width / 2, 320);
     }
-  }, [score, distance, gameState, equippedSkinId, isMatchMode, activeMatch]);
+  }, [score, distance, gameState, equippedSkinId, isMatchMode, activeMatch, freePlayMode]);
 
   const gameLoop = useCallback(() => {
     if (gameState !== "playing") {
@@ -174,14 +170,16 @@ export default function RiftGame({
       isJumping = false;
     }
 
-    if (frame % 45 === 0) obstacles.push({ x: 800, life: 1 });
+    if (!freePlayMode && frame % 45 === 0) obstacles.push({ x: 800, life: 1 });
 
-    obstacles = obstacles.filter((obs) => {
-      obs.x -= gameSpeed;
-      return obs.x > -50;
-    });
+    if (!freePlayMode) {
+      obstacles = obstacles.filter((obs) => {
+        obs.x -= gameSpeed;
+        return obs.x > -50;
+      });
+    }
 
-    const hit = obstacles.some((obs) => obs.x < 168 && obs.x > 100 && playerY + 48 > 360);
+    const hit = !freePlayMode && obstacles.some((obs) => obs.x < 168 && obs.x > 100 && playerY + 48 > 360);
     if (hit) {
       setGameState("gameover");
       saveHighScore(score);
@@ -189,7 +187,7 @@ export default function RiftGame({
       return;
     }
 
-    if (Math.random() > 0.7) {
+    if (Math.random() > 0.6) {
       particles.push({
         x: 140 + Math.random() * 30,
         y: playerY + 60,
@@ -198,11 +196,9 @@ export default function RiftGame({
       });
     }
 
-    if (frame % 120 === 0) realityIntegrity = Math.max(20, realityIntegrity - 8);
-
     draw();
     requestAnimationFrame(gameLoop);
-  }, [draw, gameState, score, saveHighScore, onGameEnd]);
+  }, [draw, gameState, score, saveHighScore, onGameEnd, freePlayMode]);
 
   const handleKey = useCallback((e: KeyboardEvent) => {
     if (gameState === "idle" && e.key === " ") {
@@ -223,12 +219,8 @@ export default function RiftGame({
         const text = `I just tore reality with ${score} in RiftTear on Base! 🔥 https://riftttear.base`;
         navigator.clipboard.writeText(text).then(() => alert("Score shared!"));
       }
-      if (e.key.toLowerCase() === "h" && setShowHowItWorks) {
-        setShowHowItWorks(true);
-      }
-      if (e.key.toLowerCase() === "l" && onLeaderboardClick) {
-        onLeaderboardClick();
-      }
+      if (e.key.toLowerCase() === "h" && setShowHowItWorks) setShowHowItWorks(true);
+      if (e.key.toLowerCase() === "l" && onLeaderboardClick) onLeaderboardClick();
     }
   }, [gameState, score, setShowHowItWorks, onLeaderboardClick]);
 
@@ -248,9 +240,7 @@ export default function RiftGame({
     console.log(`[ONCHAIN] Submitting score ${score} with skin #${equippedSkinId}`);
     setShowSubmitModal(false);
     alert("SCORE SUBMITTED • VERIFIED ON BASESCAN");
-    if (onLeaderboardClick) {
-      setTimeout(onLeaderboardClick, 800);
-    }
+    if (onLeaderboardClick) setTimeout(onLeaderboardClick, 800);
   };
 
   useEffect(() => {
@@ -281,15 +271,10 @@ export default function RiftGame({
             <Trophy className="mx-auto w-16 h-16 text-[#ffcc00] mb-6" />
             <div className="text-3xl font-black mb-2">SUBMIT TO LEADERBOARD</div>
             <div className="text-[#00ccff] text-xl mb-8">SCORE: {score} TEARS</div>
-            <button
-              onClick={submitToLeaderboard}
-              className="w-full py-6 bg-[#0052FF] hover:bg-[#0033aa] text-black text-2xl font-bold rounded-3xl transition-all mb-6"
-            >
+            <button onClick={submitToLeaderboard} className="w-full py-6 bg-[#0052FF] hover:bg-[#0033aa] text-black text-2xl font-bold rounded-3xl transition-all mb-6">
               CONFIRM ONCHAIN
             </button>
-            <button onClick={() => setShowSubmitModal(false)} className="text-white/60 hover:text-white text-sm">
-              CANCEL
-            </button>
+            <button onClick={() => setShowSubmitModal(false)} className="text-white/60 hover:text-white text-sm">CANCEL</button>
           </div>
         </div>
       )}
