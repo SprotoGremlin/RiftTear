@@ -60,8 +60,8 @@ export default function Home() {
 
   const handleJoinMatch = (match: any) => {
     setActiveMatch(match);
-    setActiveTab("lobby");
-    alert(`🎮 JOINED MATCH ${match.id} • GAME STARTING IN MATCH MODE`);
+    setFreePlayMode(false);
+    alert(`🎮 JOINED MATCH ${match.id} • GAME NOW IN MATCH MODE`);
   };
 
   return (
@@ -71,7 +71,7 @@ export default function Home() {
         <div className="flex items-center gap-4">
           <div className="text-4xl font-black tracking-[-3px] text-[#0052FF]">RIFT</div>
           <div className="text-4xl font-black tracking-[-3px] text-white">TEAR</div>
-          <div className="text-xs px-3 py-1 bg-[#ffcc00] text-black font-bold">52/100 • MATCH HISTORY ADDED</div>
+          <div className="text-xs px-3 py-1 bg-[#ffcc00] text-black font-bold">54/100 • FREE/MATCH TOGGLE LIVE</div>
         </div>
 
         <div className="flex items-center gap-8 text-sm font-medium">
@@ -79,6 +79,9 @@ export default function Home() {
           <button onClick={() => setActiveTab("skins")} className={`px-6 py-2 rounded-3xl transition-all ${activeTab === "skins" ? "bg-[#0052FF] text-black" : "hover:bg-white/10"}`}>SKINS</button>
           <button onClick={() => setActiveTab("leaderboard")} className={`px-6 py-2 rounded-3xl transition-all ${activeTab === "leaderboard" ? "bg-[#0052FF] text-black" : "hover:bg-white/10"}`}>LEADERBOARD</button>
           <button onClick={() => setShowHowItWorks(true)} className="px-6 py-2 flex items-center gap-2 hover:bg-white/10 rounded-3xl">📖 HOW IT WORKS</button>
+          <button onClick={() => setFreePlayMode(!freePlayMode)} className="px-4 py-1 bg-white/10 text-xs rounded hover:bg-white/20">
+            {freePlayMode ? "🟢 FREE PLAY" : "🔥 MATCH MODE"}
+          </button>
         </div>
 
         <div className="flex items-center gap-4 text-sm">
@@ -112,12 +115,13 @@ export default function Home() {
       <div className="max-w-screen-2xl mx-auto px-8 py-8 flex gap-8 flex-1">
         <div className="flex-1">
           <RiftGame
-            isMatchMode={!!activeMatch}
+            isMatchMode={!freePlayMode}
             activeMatch={activeMatch}
             onGameEnd={handleGameEnd}
             equippedSkinId={equippedSkinId}
             onLeaderboardClick={() => setActiveTab("leaderboard")}
             setShowHowItWorks={setShowHowItWorks}
+            freePlayMode={freePlayMode}
           />
           <button onClick={() => alert("🎉 FULL FLOW SIMULATED • YOU ARE NOW READY TO DEPLOY")} className="mt-4 px-6 py-2 bg-white text-black">SIMULATE COMPLETE PLAYTEST • GO TO 100</button>
         </div>
@@ -146,10 +150,7 @@ export default function Home() {
                 </div>
                 <MatchCreator onMatchCreated={handleMatchCreated} />
               </div>
-              <MatchHistory onJoinMatch={(match) => {
-                setActiveMatch(match);
-                alert("🎮 MATCH JOINED • GAME NOW IN MATCH MODE");
-              }} />
+              <MatchHistory onJoinMatch={handleJoinMatch} />
               <ClaimWinnings />
             </>
           )}
@@ -165,12 +166,12 @@ export default function Home() {
       <HowItWorksModal isOpen={showHowItWorks} onClose={() => setShowHowItWorks(false)} />
 
       <footer className="border-t border-white/10 py-4 px-8 text-xs flex justify-between items-center text-white/40 font-mono">
-        <div>🚀 Deployed on Vercel • Contract verified on Base • Commit 52/100 • MATCH HISTORY ADDED • FULL LOBBY COMPLETE</div>
+        <div>🚀 Deployed on Vercel • Contract verified on Base • Commit 54/100 • FREE/MATCH TOGGLE + MATCH HISTORY COMPLETE</div>
         <div className="flex gap-6">
           <button className="hover:text-white">Share on X</button>
           <button className="hover:text-white">View Contract</button>
           <button className="hover:text-white">⭐ Star Repo</button>
-          <span>Made with ❤️ by God Tier Commit Generator v4.5 + Grok • 48 more to go</span>
+          <span>Made with ❤️ by God Tier Commit Generator v4.5 + Grok • 46 more to go</span>
         </div>
         <div>0xRiftTear.base • All rights torn in the rift</div>
       </footer>
