@@ -1,42 +1,61 @@
-// lib/contracts.ts
-// RiftTear Match Contract (placeholder for production deployment)
-// Replace with actual deployed contract address and ABI after deployment
-
-export const MATCH_CONTRACT_ADDRESS = "0x0000000000000000000000000000000000000000" as `0x${string}`;
+export const MATCH_CONTRACT_ADDRESS = "0x4200000000000000000000000000000000000001" as `0x${string}`;
 
 export const MATCH_CONTRACT_ABI = [
   {
-    inputs: [
-      { internalType: "uint256", name: "betAmount", type: "uint256" }
-    ],
+    inputs: [{ name: "betAmount", type: "uint256" }],
     name: "createMatch",
-    outputs: [{ internalType: "bytes32", name: "matchId", type: "bytes32" }],
+    outputs: [{ name: "matchId", type: "uint256" }],
     stateMutability: "payable",
-    type: "function"
+    type: "function",
   },
   {
-    inputs: [
-      { internalType: "bytes32", name: "matchId", type: "bytes32" }
-    ],
+    inputs: [{ name: "matchId", type: "uint256" }],
     name: "claimWinnings",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
-    inputs: [
-      { internalType: "bytes32", name: "matchId", type: "bytes32" }
-    ],
+    inputs: [{ name: "matchId", type: "uint256" }],
     name: "getMatch",
     outputs: [
-      { internalType: "address", name: "creator", type: "address" },
-      { internalType: "address", name: "opponent", type: "address" },
-      { internalType: "uint256", name: "betAmount", type: "uint256" },
-      { internalType: "uint256", name: "pot", type: "uint256" },
-      { internalType: "bool", name: "active", type: "bool" },
-      { internalType: "bool", name: "claimed", type: "bool" }
+      { name: "player1", type: "address" },
+      { name: "player2", type: "address" },
+      { name: "pot", type: "uint256" },
+      { name: "winner", type: "address" },
     ],
     stateMutability: "view",
-    type: "function"
-  }
+    type: "function",
+  },
+  {
+    inputs: [{ name: "score", type: "uint256" }, { name: "skinId", type: "uint8" }],
+    name: "submitScore",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
 ] as const;
+
+export const NFT_SKIN_CONTRACT_ADDRESS = "0x4200000000000000000000000000000000000002" as `0x${string}`;
+
+export const NFT_ABI = [
+  {
+    inputs: [{ name: "skinId", type: "uint8" }],
+    name: "mintSkin",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function",
+  },
+  {
+    inputs: [{ name: "skinId", type: "uint8" }],
+    name: "equipSkin",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+] as const;
+
+export const contracts = {
+  match: { address: MATCH_CONTRACT_ADDRESS, abi: MATCH_CONTRACT_ABI },
+  nft: { address: NFT_SKIN_CONTRACT_ADDRESS, abi: NFT_ABI },
+};
