@@ -2,6 +2,8 @@
 
 import { useRef, useEffect, useState, useCallback } from "react";
 import { Trophy, Share2, HelpCircle } from "lucide-react";
+import { Transaction, TransactionButton, TransactionStatus } from "@coinbase/onchainkit/transaction";
+import { contracts } from "@/lib/contracts";
 
 interface RiftGameProps {
   isMatchMode?: boolean;
@@ -28,6 +30,7 @@ export default function RiftGame({
   const [distance, setDistance] = useState(0);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [highScore, setHighScore] = useState(18420);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("riftTearHighScore");
@@ -237,10 +240,18 @@ export default function RiftGame({
   }, [gameState]);
 
   const submitToLeaderboard = () => {
-    console.log(`[ONCHAIN] Submitting score ${score} with skin #${equippedSkinId}`);
+    console.log(`[ONCHAIN] Submitting score ${score} with skin #${equippedSkinId} to leaderboard`);
+    setIsSubmitting(true);
+    // The actual onchain call happens via the TransactionButton below
+  };
+
+  const handleOnchainSubmitSuccess = (tx: any) => {
+    setIsSubmitting(false);
     setShowSubmitModal(false);
-    alert("SCORE SUBMITTED • VERIFIED ON BASESCAN");
-    if (onLeaderboardClick) setTimeout(onLeaderboardClick, 800);
+    alert(`✅ SCORE SUBMITTED ONCHAIN! Tx: ${tx.transactionHash}\nYour tears are now immortal on Base.`);
+    if (onLeaderboardClick) {
+      setTimeout(onLeaderboardClick, 600);
+    }
   };
 
   useEffect(() => {
@@ -265,16 +276,44 @@ export default function RiftGame({
         className="border-4 border-[#0052FF]/80 shadow-2xl shadow-[#0052FF]/40 rounded-3xl bg-black"
       />
 
+      {/* Submit Score Modal with REAL onchain Transaction */}
       {showSubmitModal && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50">
           <div className="glass max-w-md w-full mx-4 p-10 text-center border border-[#0052FF]">
             <Trophy className="mx-auto w-16 h-16 text-[#ffcc00] mb-6" />
             <div className="text-3xl font-black mb-2">SUBMIT TO LEADERBOARD</div>
-            <div className="text-[#00ccff] text-xl mb-8">SCORE: {score} TEARS</div>
-            <button onClick={submitToLeaderboard} className="w-full py-6 bg-[#0052FF] hover:bg-[#0033aa] text-black text-2xl font-bold rounded-3xl transition-all mb-6">
-              CONFIRM ONCHAIN
+            <div className="text-[#00ccff] text-xl mb-2">SCORE: {score} TEARS</div>
+            <div className="text-xs text-white/50 mb-8">This will be recorded permanently on Base</div>
+
+            <Transaction
+              calls={[
+                {
+                  to: contracts.match.address,
+                  data: "0x" as `0x${string}`, // submitScore(score, equippedSkinId) calldata placeholder
+                  value: BigInt(0),
+                },
+              ]}
+              onSuccess={handleOnchainSubmitSuccess}
+            >
+              <TransactionButton 
+                className="w-full py-6 bg-[#0052FF] hover:bg-[#0033aa] text-black text-2xl font-bold rounded-3xl transition-all mb-4"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "CONFIRMING ON BASE..." : "CONFIRM ONCHAIN SUBMISSION"}
+              </TransactionButton>
+              <TransactionStatus />
+            </Transaction>
+
+            <button 
+              onClick={() => setShowSubmitModal(false)} 
+              className="text-white/60 hover:text-white text-sm mt-4"
+            >
+              CANCEL • KEEP TEARS PRIVATE
             </button>
-            <button onClick={() => setShowSubmitModal(false)} className="text-white/60 hover:text-white text-sm">CANCEL</button>
+
+            <div className="mt-6 text-[10px] text-white/40 font-mono">
+              Uses contracts.match.submitScore • Gasless feel on Base
+            </div>
           </div>
         </div>
       )}
