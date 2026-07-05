@@ -134,9 +134,15 @@ export default function RiftGame({
       ctx.font = "700 20px monospace";
       ctx.fillText("SUBMIT TO LEADERBOARD", canvas.width / 2, 340);
 
+      ctx.fillStyle = "#00ccff";
+      ctx.fillRect(canvas.width / 2 - 140, 380, 280, 48);
+      ctx.fillStyle = "#000";
+      ctx.font = "700 18px monospace";
+      ctx.fillText("PLAY AGAIN", canvas.width / 2, 410);
+
       ctx.font = "400 14px monospace";
       ctx.fillStyle = "#00ccff";
-      ctx.fillText("PRESS L → LEADERBOARD • H → HOW IT WORKS", canvas.width / 2, 420);
+      ctx.fillText("PRESS L → LEADERBOARD • H → HOW IT WORKS • SPACE → RESTART", canvas.width / 2, 460);
     }
 
     if (gameState === "idle") {
@@ -218,6 +224,10 @@ export default function RiftGame({
     }
 
     if (gameState === "gameover") {
+      if (e.key.toLowerCase() === " ") {
+        setGameState("idle");
+        setScore(0);
+      }
       if (e.key.toLowerCase() === "s") {
         const text = `I just tore reality with ${score} in RiftTear on Base! 🔥 https://riftttear.base`;
         navigator.clipboard.writeText(text).then(() => alert("Score shared!"));
@@ -237,21 +247,24 @@ export default function RiftGame({
     if (gameState === "gameover" && clickX > canvas.width / 2 - 140 && clickX < canvas.width / 2 + 140 && clickY > 300 && clickY < 364) {
       setShowSubmitModal(true);
     }
+    if (gameState === "gameover" && clickX > canvas.width / 2 - 140 && clickX < canvas.width / 2 + 140 && clickY > 380 && clickY < 428) {
+      setGameState("idle");
+      setScore(0);
+      obstacles = [];
+      particles = [];
+    }
   }, [gameState]);
 
   const submitToLeaderboard = () => {
-    console.log(`[ONCHAIN] Submitting score ${score} with skin #${equippedSkinId} to leaderboard`);
+    console.log(`[ONCHAIN] Submitting score ${score} with skin #${equippedSkinId}`);
     setIsSubmitting(true);
-    // The actual onchain call happens via the TransactionButton below
   };
 
   const handleOnchainSubmitSuccess = (tx: any) => {
     setIsSubmitting(false);
     setShowSubmitModal(false);
     alert(`✅ SCORE SUBMITTED ONCHAIN! Tx: ${tx.transactionHash}\nYour tears are now immortal on Base.`);
-    if (onLeaderboardClick) {
-      setTimeout(onLeaderboardClick, 600);
-    }
+    if (onLeaderboardClick) setTimeout(onLeaderboardClick, 600);
   };
 
   useEffect(() => {
@@ -276,7 +289,6 @@ export default function RiftGame({
         className="border-4 border-[#0052FF]/80 shadow-2xl shadow-[#0052FF]/40 rounded-3xl bg-black"
       />
 
-      {/* Submit Score Modal with REAL onchain Transaction */}
       {showSubmitModal && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50">
           <div className="glass max-w-md w-full mx-4 p-10 text-center border border-[#0052FF]">
@@ -289,7 +301,7 @@ export default function RiftGame({
               calls={[
                 {
                   to: contracts.match.address,
-                  data: "0x" as `0x${string}`, // submitScore(score, equippedSkinId) calldata placeholder
+                  data: "0x" as `0x${string}`,
                   value: BigInt(0),
                 },
               ]}
@@ -310,10 +322,6 @@ export default function RiftGame({
             >
               CANCEL • KEEP TEARS PRIVATE
             </button>
-
-            <div className="mt-6 text-[10px] text-white/40 font-mono">
-              Uses contracts.match.submitScore • Gasless feel on Base
-            </div>
           </div>
         </div>
       )}
