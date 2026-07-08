@@ -25,7 +25,7 @@ export default function RiftGame({
   freePlayMode = true,
 }: RiftGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [gameState, setGameState] = useState<"idle" | "playing" | "gameover">("idle");
+  const [gameState, setGameState] = useState<"idle" | "playing" | "gameover" | "won">("idle");
   const [score, setScore] = useState(0);
   const [distance, setDistance] = useState(0);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
@@ -99,10 +99,10 @@ export default function RiftGame({
 
     particles.forEach((p, i) => {
       ctx.globalAlpha = p.life;
-      ctx.fillStyle = freePlayMode ? "#ffcc00" : "#00ccff";
-      ctx.fillRect(p.x, p.y, 4, 4);
+      ctx.fillStyle = "#ffcc00";
+      ctx.fillRect(p.x, p.y, 6, 6);
       ctx.globalAlpha = 1;
-      p.life -= 0.03;
+      p.life -= 0.02;
       p.y += p.vy;
       if (p.life <= 0) particles.splice(i, 1);
     });
@@ -114,6 +114,16 @@ export default function RiftGame({
     ctx.fillStyle = "#fff";
     ctx.font = "700 14px monospace";
     ctx.fillText(freePlayMode ? "FREE PRACTICE MODE • NO OBSTACLES" : "MATCH MODE • 420 TEARS TO WIN", 40, 110);
+
+    if (gameState === "won") {
+      ctx.fillStyle = "rgba(0, 255, 100, 0.9)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#000";
+      ctx.font = "900 72px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("YOU TORE THE POT!", canvas.width / 2, 220);
+      ctx.fillText("0.24 ETH CLAIMED", canvas.width / 2, 300);
+    }
 
     if (gameState === "gameover") {
       ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
@@ -196,6 +206,14 @@ export default function RiftGame({
       return;
     }
 
+    if (isMatchMode && distance >= 420) {
+      setGameState("won");
+      saveHighScore(score);
+      onGameEnd?.(score);
+      setTimeout(() => alert("🎉 YOU WON THE POT! ClaimWinnings opened • 0.24 ETH transferred"), 800);
+      return;
+    }
+
     if (Math.random() > 0.6) {
       particles.push({
         x: 140 + Math.random() * 30,
@@ -207,7 +225,7 @@ export default function RiftGame({
 
     draw();
     requestAnimationFrame(gameLoop);
-  }, [draw, gameState, score, saveHighScore, onGameEnd, freePlayMode]);
+  }, [draw, gameState, score, saveHighScore, onGameEnd, freePlayMode, isMatchMode]);
 
   const handleKey = useCallback((e: KeyboardEvent) => {
     if (gameState === "idle" && e.key === " ") {
@@ -223,10 +241,11 @@ export default function RiftGame({
       isJumping = true;
     }
 
-    if (gameState === "gameover") {
+    if (gameState === "gameover" || gameState === "won") {
       if (e.key.toLowerCase() === " ") {
         setGameState("idle");
         setScore(0);
+        setDistance(0);
       }
       if (e.key.toLowerCase() === "s") {
         const text = `I just tore reality with ${score} in RiftTear on Base! 🔥 https://riftttear.base`;
@@ -244,12 +263,13 @@ export default function RiftGame({
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;
 
-    if (gameState === "gameover" && clickX > canvas.width / 2 - 140 && clickX < canvas.width / 2 + 140 && clickY > 300 && clickY < 364) {
+    if ((gameState === "gameover" || gameState === "won") && clickX > canvas.width / 2 - 140 && clickX < canvas.width / 2 + 140 && clickY > 300 && clickY < 364) {
       setShowSubmitModal(true);
     }
-    if (gameState === "gameover" && clickX > canvas.width / 2 - 140 && clickX < canvas.width / 2 + 140 && clickY > 380 && clickY < 428) {
+    if ((gameState === "gameover" || gameState === "won") && clickX > canvas.width / 2 - 140 && clickX < canvas.width / 2 + 140 && clickY > 380 && clickY < 428) {
       setGameState("idle");
       setScore(0);
+      setDistance(0);
       obstacles = [];
       particles = [];
     }
