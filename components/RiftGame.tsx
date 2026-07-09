@@ -53,6 +53,7 @@ export default function RiftGame({
   let particles: any[] = [];
   let frame = 0;
   let gameSpeed = freePlayMode ? 4 : 6;
+  let lastTouchY = 0;
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -210,7 +211,6 @@ export default function RiftGame({
       setGameState("won");
       saveHighScore(score);
       onGameEnd?.(score);
-      setTimeout(() => alert("🎉 YOU WON THE POT! ClaimWinnings opened • 0.24 ETH transferred"), 800);
       return;
     }
 
@@ -256,6 +256,20 @@ export default function RiftGame({
     }
   }, [gameState, score, setShowHowItWorks, onLeaderboardClick]);
 
+  const handleTouchStart = useCallback((e: TouchEvent) => {
+    if (gameState !== "playing") return;
+    lastTouchY = e.touches[0].clientY;
+  }, [gameState]);
+
+  const handleTouchEnd = useCallback((e: TouchEvent) => {
+    if (gameState !== "playing") return;
+    const deltaY = lastTouchY - e.changedTouches[0].clientY;
+    if (deltaY > 30 && !isJumping) {
+      velocity = jump;
+      isJumping = true;
+    }
+  }, [gameState, jump]);
+
   const handleCanvasClick = useCallback((e: React.MouseEvent) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -292,10 +306,18 @@ export default function RiftGame({
     if (canvas) {
       canvas.width = 800;
       canvas.height = 480;
+      canvas.addEventListener("touchstart", handleTouchStart);
+      canvas.addEventListener("touchend", handleTouchEnd);
     }
     window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [handleKey]);
+    return () => {
+      if (canvas) {
+        canvas.removeEventListener("touchstart", handleTouchStart);
+        canvas.removeEventListener("touchend", handleTouchEnd);
+      }
+      window.removeEventListener("keydown", handleKey);
+    };
+  }, [handleKey, handleTouchStart, handleTouchEnd]);
 
   useEffect(() => {
     gameLoop();
@@ -306,7 +328,7 @@ export default function RiftGame({
       <canvas
         ref={canvasRef}
         onClick={handleCanvasClick}
-        className="border-4 border-[#0052FF]/80 shadow-2xl shadow-[#0052FF]/40 rounded-3xl bg-black"
+        className="border-4 border-[#0052FF]/80 shadow-2xl shadow-[#0052FF]/40 rounded-3xl bg-black touch-manipulation"
       />
 
       {showSubmitModal && (
