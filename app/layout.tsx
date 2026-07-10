@@ -11,10 +11,13 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "RiftTear • 1v1 Endless Runner + Onchain Betting on Base",
-  description: "Bet crypto. Race friends. Winner takes the pot. NFT skins + reality-breaking glitch visuals. Fully onchain on Base.",
+  description: "Bet crypto. Race friends. Winner takes the pot. NFT skins with insane glitch visuals. Fully onchain on Base.",
   icons: {
     icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
   },
+  manifest: "/manifest.json",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
   openGraph: {
     title: "RiftTear • Rift the Reality on Base",
     description: "High-stakes 1v1 runner with live escrow betting. Deployed on Base mainnet.",
@@ -27,6 +30,10 @@ const queryClient = new QueryClient();
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#0052FF" />
+      </head>
       <body className={inter.className}>
         <WagmiProvider config={WagmiConfig}>
           <QueryClientProvider client={queryClient}>
@@ -35,10 +42,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               projectId={process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_ID!}
             >
               {children}
-              {/* Production badge */}
-              <div className="fixed bottom-3 left-1/2 -translate-x-1/2 text-[10px] font-mono bg-black/80 px-4 py-1 border border-[#0052FF]/30 text-[#0052FF]">
-                🟢 LIVE ON BASE MAINNET • COMMIT 42/100 • FULLY DEPLOYABLE
-              </div>
             </OnchainKitProvider>
           </QueryClientProvider>
         </WagmiProvider>
