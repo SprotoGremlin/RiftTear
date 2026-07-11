@@ -1,0 +1,24 @@
+{
+  "name": "RiftTear",
+  "short_name": "RiftTear",
+  "description": "1v1 Endless Runner + Onchain Betting on Base",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050511",
+  "theme_color": "#0052FF",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "orientation": "portrait",
+  "categories": ["games", "finance"],
+  "lang": "en"
+}
